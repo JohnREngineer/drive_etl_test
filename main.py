@@ -1,3 +1,8 @@
-import UpdateDatasets
+from UpdateDatasets import update_datasets
+import sys
 
-UpdateDatasets.update_datasets()
+def my_test():
+  return 'lol'
+
+if __name__ == '__main__':
+  update_datasets(sys.argv)
