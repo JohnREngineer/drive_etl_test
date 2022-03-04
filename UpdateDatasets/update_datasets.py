@@ -1,7 +1,6 @@
 from re import S
 from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
-from pathlib import Path
 import gspread
 from oauth2client.client import GoogleCredentials
 import pandas as pd
