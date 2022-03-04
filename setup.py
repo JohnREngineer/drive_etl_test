@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name='toolbox',
+    name='drive_etl_tools',
     version='0.0.3',
     author='Mike Huls',
     author_email='JohnREngineer@gmail.com',
