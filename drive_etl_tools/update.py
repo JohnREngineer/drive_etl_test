@@ -104,11 +104,11 @@ def export_unique(df, exports, gspread_auth=None, drive_auth=None):
     nf = get_df_from_columns(df, export['columns'])
     lf, list_sheet = get_df_from_drive(export['dataset'], gspread_auth=gspread_auth)
     unique = export['unique']
-    lf['python_deduplicate_column'] = apply_function(lf, unique['function'], unique['column'], unique.get('args'))
+    list_dedup = apply_function(lf, unique['function'], unique['column'], unique.get('args'))
     nf['python_deduplicate_column'] = apply_function(nf, unique['function'], unique['column'], unique.get('args'))
-    uf = nf.loc[[(u not in lf['python_deduplicate_column'].values) for u in nf['python_deduplicate_column']]].copy()
+    uf = nf.loc[[(u not in list_dedup.values) for u in nf['python_deduplicate_column']]].copy()
     uf = uf.drop_duplicates(subset='python_deduplicate_column', keep='last')
-    uf = uf.drop('python_deduplicate_column')
+    uf = uf.drop('python_deduplicate_column', axis=1)
     path = None
     outputText = ''
     excel = export['excel']
