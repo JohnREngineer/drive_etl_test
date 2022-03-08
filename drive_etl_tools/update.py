@@ -161,7 +161,7 @@ def export_dataframe(df, exports, columns, gspread_auth=None, drive_auth=None):
 def split_all(string, split_chars):
   out_string = string
   for s in split_chars:
-    out_string = string.split(s)[0]
+    out_string = out_string.split(s)[0]
   return out_string
 
 def get_df_from_inputs(inputs, defaults, calculations, gspread_auth=None, split_chars = ['\n','?','(']):
