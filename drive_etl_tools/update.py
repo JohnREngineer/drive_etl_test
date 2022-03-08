@@ -126,11 +126,11 @@ def export_to_template(path, sheet_name, df, nick_names, suffix):
   os.rename(path, new_path)
   return new_path
 
-def export_dataframe(df, exports, gspread_auth=None, drive_auth=None):
+def export_dataframe(df, exports, columns, gspread_auth=None, drive_auth=None):
   outputs = []
   suffix = str(int(time.time()))
   for export in exports:
-    nf, nick_names = get_df_from_columns(df, export['columns'])
+    nf, nick_names = get_df_from_columns(df, columns)
     unique = export.get('unique')
     nf['python_deduplicate_column'] = apply_function(nf, unique)
     ef = nf
@@ -162,13 +162,10 @@ def get_df_from_inputs(inputs, defaults, calculations, gspread_auth=None):
   dfs = []
   for input in inputs:
     print('\t'+'https://docs.google.com/spreadsheets/d/'+input['key']+'/edit')
-    dfs.append(get_df_from_drive(input, defaults=defaults, gspread_auth=gspread_auth)[0])
-  df = None
-  try:
-    df = pd.concat(dfs)
-  except:
-    print([d.columns for d in dfs])
-    return
+    af = get_df_from_drive(input, defaults=defaults, gspread_auth=gspread_auth)[0]
+    af.columns = [(c.split('\n')[0]).strip().upper() for c in af.columns] 
+    dfs.append(af)
+  df = pd.concat(dfs)
   if len(df) == 0:
     return None
   for calc in calculations:
@@ -270,7 +267,7 @@ def update_dataset(settings, gspread_auth=None, drive_auth=None):
     return get_nothing_response(len(settings['exports']))
   else:
     print('Results:')
-  nfs, files = export_dataframe(df, settings['exports'], gspread_auth=gspread_auth, drive_auth=drive_auth)
+  nfs, files = export_dataframe(df, settings['exports'], settings['columns'], gspread_auth=gspread_auth, drive_auth=drive_auth)
   return nfs, files
 
 def update_datasets(settings_location):
