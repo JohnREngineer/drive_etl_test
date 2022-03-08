@@ -133,7 +133,7 @@ def export_dataframe(df, exports, gspread_auth=None, drive_auth=None):
         for _, row in ef.iterrows():
             list_sheet.append_rows(values=[list(row.values)])
       path = export_to_template(path, sheet_name, ef, nick_names, suffix)
-      print('\tCreated '+path)
+      print('\t\tCreated '+path)
     outputs.append([ef, path])
   return list(map(list,list(zip(*outputs))))
 
