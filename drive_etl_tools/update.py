@@ -73,7 +73,7 @@ def export_to_template(df, excel, suffix, drive_auth=None):
 def if_then_else(inputs, values):
   iter_inputs = iter(inputs)
   question = next(iter_inputs)
-  # Need to account for v == '' as a legitimate option
+  # This accounts for v == '' as a legitimate option
   answers = [next(iter_inputs) if (v is None) else v for v in values]
   return answers[not question]
 
@@ -102,7 +102,7 @@ def export_unique(df, exports, gspread_auth=None, drive_auth=None):
   suffix = str(int(time.time()))
   for export in exports:
     nf = get_df_from_columns(df, export['columns'])
-    lf, list_sheet = get_df_from_drive(export['dataset'], gspread_auth=gspread_auth)
+    lf, list_sheet = get_df_from_drive(export['datatable'], gspread_auth=gspread_auth)
     unique = export['unique']
     list_dedup = apply_function(lf, unique['function'], unique['column'], unique.get('args'))
     nf['python_deduplicate_column'] = apply_function(nf, unique['function'], unique['column'], unique.get('args'))
