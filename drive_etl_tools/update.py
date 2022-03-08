@@ -122,11 +122,11 @@ def export_unique(df, exports, gspread_auth=None, drive_auth=None):
     print('\tNew '+excel['sheet']+':\t'+str(uniques)+outputText)
   return list(map(list,list(zip(*outputs))))
 
-def get_df_from_input(inputs, calculations, gspread_auth=None):
+def get_df_from_inputs(inputs, calculations, gspread_auth=None):
   dfs = []
   for input in inputs:
     print('\t'+'https://docs.google.com/spreadsheets/d/'+input['key']+'/edit')
-    dfs.append(get_df_from_drive(input, defaults=input['defaults'], gspread_auth=gspread_auth)[0])
+    dfs.append(get_df_from_drive(input, defaults=inputs['defaults'], gspread_auth=gspread_auth)[0])
   df = pd.concat(dfs)
   if len(df) == 0:
     return None
@@ -223,7 +223,7 @@ def update_dataset(dataset, gspread_auth=None, drive_auth=None):
   else:
     print('No inputs found.')
     return get_nothing_response(len(dataset['exports']))
-  df = get_df_from_input(inputs, dataset['calculations'], gspread_auth=gspread_auth)
+  df = get_df_from_inputs(inputs, dataset['calculations'], gspread_auth=gspread_auth)
   if df is None:
     print('\nAll input files are empty.')
     return get_nothing_response(len(dataset['exports']))
