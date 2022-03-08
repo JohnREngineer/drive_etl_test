@@ -125,8 +125,9 @@ def export_dataframe(df, exports, gspread_auth=None, drive_auth=None):
       sheet_name = xl.sheet_names[int(sheet_name)]
     print('\tNew '+sheet_name+':\t'+str(len(ef)))
     if len(ef) > 0:
-      for index, row in ef[list(lf.columns)].iterrows():
-          list_sheet.append_rows(values=[list(row.values)])
+      if datatable:
+        for _, row in ef.iterrows():
+            list_sheet.append_rows(values=[list(row.values)])
       path = export_to_template(path, sheet_name, ef, suffix)
       print('\tCreated '+path)
     outputs.append([ef, path])
