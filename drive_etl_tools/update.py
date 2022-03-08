@@ -128,13 +128,14 @@ def export_dataframe(df, exports, gspread_auth=None, drive_auth=None):
       xl = pd.ExcelFile(path)
       sheet_name = xl.sheet_names[int(sheet_name)]
     print('\tNew '+sheet_name+':\t'+str(len(ef)))
+    out_path = None
     if len(ef) > 0:
       if datatable:
         for _, row in ef.iterrows():
             list_sheet.append_rows(values=[list(row.values)])
-      path = export_to_template(path, sheet_name, ef, nick_names, suffix)
+      out_path = export_to_template(path, sheet_name, ef, nick_names, suffix)
       print('\t\tCreated '+path)
-    outputs.append([ef, path])
+    outputs.append([ef, out_path])
   return list(map(list,list(zip(*outputs))))
 
 def get_df_from_inputs(inputs, defaults, calculations, gspread_auth=None):
