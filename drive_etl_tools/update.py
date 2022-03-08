@@ -223,7 +223,7 @@ def update_dataset(settings, gspread_auth=None, drive_auth=None):
   else:
     print('No inputs found.')
     return get_nothing_response(len(settings['exports']))
-  df = get_df_from_inputs(input_keys, settings['defaults'], settings['calculations'], gspread_auth=gspread_auth)
+  df = get_df_from_inputs(input_keys, settings['inputs']['defaults'], settings['calculations'], gspread_auth=gspread_auth)
   if df is None:
     print('\nAll input files are empty.')
     return get_nothing_response(len(settings['exports']))
