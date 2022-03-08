@@ -163,10 +163,12 @@ def get_df_from_inputs(inputs, defaults, calculations, gspread_auth=None):
   for input in inputs:
     print('\t'+'https://docs.google.com/spreadsheets/d/'+input['key']+'/edit')
     dfs.append(get_df_from_drive(input, defaults=defaults, gspread_auth=gspread_auth)[0])
+  df = None
   try:
     df = pd.concat(dfs)
   except:
     print([d.columns for d in dfs])
+    return
   if len(df) == 0:
     return None
   for calc in calculations:
