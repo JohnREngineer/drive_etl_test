@@ -95,7 +95,7 @@ def apply_function(df, function, input_value, args=None):
 
 def export_to_template(path, sheet_name, df, suffix):
   ef = pd.read_excel(path,sheet_name=sheet_name)
-  ef = ef.append(df[ef.columns.values], ignore_index = True)
+  ef = ef.append(df, ignore_index=True)
   with pd.ExcelWriter(path,  engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
     ef.to_excel(writer, sheet_name=sheet_name, index=False)
   new_path = 'New_'+sheet_name+'_'+suffix+'.xlsx'
