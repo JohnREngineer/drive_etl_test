@@ -93,40 +93,43 @@ def apply_function(df, function, input_value, args=None):
     kwargs['axis'] = 1
   return df[input].apply(f, **kwargs)
 
-def export_to_template(path, df, excel, sheet_name, suffix):
+def export_to_template(path, sheet_name, df, suffix):
   ef = pd.read_excel(path,sheet_name=sheet_name)
   ef = ef.append(df[ef.columns.values], ignore_index = True)
   with pd.ExcelWriter(path,  engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
     ef.to_excel(writer, sheet_name=sheet_name, index=False)
   new_path = 'New_'+sheet_name+'_'+suffix+'.xlsx'
   os.rename(path, new_path)
-  return new_path, sheet_name
+  return new_path
 
-def export_unique(df, exports, gspread_auth=None, drive_auth=None):
+def export_dataframe(df, exports, gspread_auth=None, drive_auth=None):
   outputs = []
   suffix = str(int(time.time()))
   for export in exports:
     nf = get_df_from_columns(df, export['columns'])
-    lf, list_sheet = get_df_from_drive(export['datatable'], gspread_auth=gspread_auth)
-    unique = export['unique']
-    list_dedup = apply_function(lf, unique['function'], unique['column'], unique.get('args'))
+    unique = export.get('unique')
     nf['python_deduplicate_column'] = apply_function(nf, unique['function'], unique['column'], unique.get('args'))
-    uf = nf.loc[[(u not in list_dedup.values) for u in nf['python_deduplicate_column']]].copy()
-    uf = uf.drop_duplicates(subset='python_deduplicate_column', keep='last')
-    uf = uf.drop('python_deduplicate_column', axis=1)
+    ef = nf
+    datatable = export.get('datatable')
+    if datatable:
+      lf, list_sheet = get_df_from_drive(export['datatable'], gspread_auth=gspread_auth)
+      list_dedup = apply_function(lf, unique['function'], unique['column'], unique.get('args'))
+      ef = nf.loc[[(u not in list_dedup.values) for u in nf['python_deduplicate_column']]].copy()
+    ef = ef.drop_duplicates(subset='python_deduplicate_column', keep='last')
+    ef = ef.drop('python_deduplicate_column', axis=1)
     excel = export['excel']
     path = download_drive_file(sanitize_key(excel['key']), drive_auth)
     sheet_name = excel['sheet']
     if str(sheet_name).isdigit():
       xl = pd.ExcelFile(path)
       sheet_name = xl.sheet_names[int(sheet_name)]
-    print('\tNew '+sheet_name+':\t'+str(len(uf)))
-    if len(uf) > 0:
-      for index, row in uf[list(lf.columns)].iterrows():
+    print('\tNew '+sheet_name+':\t'+str(len(ef)))
+    if len(ef) > 0:
+      for index, row in ef[list(lf.columns)].iterrows():
           list_sheet.append_rows(values=[list(row.values)])
-      path, name = export_to_template(uf, excel, sheet_name, suffix, drive_auth)
+      path = export_to_template(path, sheet_name, ef, suffix)
       print('\tCreated '+path)
-    outputs.append([uf, path])
+    outputs.append([ef, path])
   return list(map(list,list(zip(*outputs))))
 
 def get_df_from_inputs(inputs, defaults, calculations, gspread_auth=None):
@@ -236,7 +239,7 @@ def update_dataset(settings, gspread_auth=None, drive_auth=None):
     return get_nothing_response(len(settings['exports']))
   else:
     print('Results:')
-  nfs, files = export_unique(df, settings['exports'], gspread_auth=gspread_auth, drive_auth=drive_auth)
+  nfs, files = export_dataframe(df, settings['exports'], gspread_auth=gspread_auth, drive_auth=drive_auth)
   return nfs, files
 
 def update_datasets(settings_location):
