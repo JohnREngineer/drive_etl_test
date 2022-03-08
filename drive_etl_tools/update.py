@@ -33,8 +33,9 @@ def download_drive_file(key, drive_auth=None):
   return path
 
 def get_df_from_columns(df, columns):
-  nf = df[list(columns.values())].copy()
-  nf.columns = list(columns.keys())
+  names, calculations = list(map(list,list(zip(*columns))))
+  nf = df[calculations].copy()
+  nf.columns = list(names)
   return nf
 
 def sanitize_key(key):
