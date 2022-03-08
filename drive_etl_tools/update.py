@@ -122,11 +122,11 @@ def export_unique(df, exports, gspread_auth=None, drive_auth=None):
     print('\tNew '+excel['sheet']+':\t'+str(uniques)+outputText)
   return list(map(list,list(zip(*outputs))))
 
-def get_df_from_input(inputs, defaults, calculations, gspread_auth=None):
+def get_df_from_input(inputs, calculations, gspread_auth=None):
   dfs = []
   for input in inputs:
     print('\t'+'https://docs.google.com/spreadsheets/d/'+input['key']+'/edit')
-    dfs.append(get_df_from_drive(input, defaults=defaults, gspread_auth=gspread_auth)[0])
+    dfs.append(get_df_from_drive(input, defaults=input['defaults'], gspread_auth=gspread_auth)[0])
   df = pd.concat(dfs)
   if len(df) == 0:
     return None
@@ -165,7 +165,7 @@ def get_settings_from_folder(key, drive_auth=None):
   settings = get_settings_from_key(first.get('key'), drive_auth=drive_auth)
   return settings
 
-def get_settings_data(settings, drive_auth=None):
+def get_settings(settings_location, drive_auth=None):
   print('Settings:')
   settings_getters = {
       'object': lambda s: s['object'],
@@ -173,7 +173,7 @@ def get_settings_data(settings, drive_auth=None):
       'key': lambda s: get_settings_from_key(s.get('key'), drive_auth=drive_auth),
       'folder': lambda s: get_settings_from_folder(s.get('key'), drive_auth=drive_auth)
   }
-  return settings_getters[settings['type']](settings)
+  return settings_getters[settings_location['type']](settings_location)
 
 def get_inputs_from_sheet(location, defaults={'sheet':0, 'headers':0, 'start':1, 'end':None}, gspread_auth=None):
   records = get_df_from_drive(location, gspread_auth=gspread_auth)[0].to_dict('records')
@@ -216,32 +216,28 @@ def get_inputs(inputs, gspread_auth=None, drive_auth=None):
 def get_nothing_response(n):
   return [None for _ in range(n)], []
 
-def update_dataset(config):
-  gspread_auth, drive_auth = get_auths()
-  settings = get_settings_data(config['settings'], drive_auth)
-  if not settings:
-    print('No settings found.')
-    return get_nothing_response(2)
-  input_settings = settings['inputs']
-  adhoc_input_settings = config.get('inputs')
-  if adhoc_input_settings:
-    input_settings.update({k: adhoc_input_settings[k] for k,v in input_settings.items() if adhoc_input_settings.get(k)})
-  inputs = get_inputs(input_settings, gspread_auth, drive_auth)
+def update_dataset(dataset, gspread_auth=None, drive_auth=None):
+  inputs = get_inputs(dataset['inputs'], gspread_auth, drive_auth)
   if inputs:
     print('Inputs:')      
   else:
     print('No inputs found.')
-    return get_nothing_response(len(settings['exports']))
-  df = get_df_from_input(inputs, input_settings['defaults'], settings['calculations'], gspread_auth=gspread_auth)
+    return get_nothing_response(len(dataset['exports']))
+  df = get_df_from_input(inputs, dataset['calculations'], gspread_auth=gspread_auth)
   if df is None:
     print('\nAll input files are empty.')
-    return get_nothing_response(len(settings['exports']))
+    return get_nothing_response(len(dataset['exports']))
   else:
     print('Results:')
-  nfs, files = export_unique(df, settings['exports'], gspread_auth=gspread_auth, drive_auth=drive_auth)
+  nfs, files = export_unique(df, dataset['exports'], gspread_auth=gspread_auth, drive_auth=drive_auth)
   return nfs, files
 
-def update_datasets(config):
-  input_datasets = config['input_datasets']
-  ans = [update_dataset(c) for c in input_datasets]
+def update_datasets(settings_location):
+  gspread_auth, drive_auth = get_auths()
+  settings = get_settings(settings_location, drive_auth)
+  datasets = settings['datasets']
+  if not settings:
+    print('No settings found.')
+    return get_nothing_response(2)
+  ans = [update_dataset(dataset, gspread_auth=gspread_auth, drive_auth=drive_auth) for dataset in datasets]
   return ans
