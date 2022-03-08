@@ -61,9 +61,8 @@ def get_df_from_drive(location, defaults={'sheet':0, 'headers':0, 'start':1, 'en
   df = df.reset_index(drop=True)
   return df, sh
 
-def export_to_template(df, excel, suffix, drive_auth=None):
+def export_to_template(df, excel, sheet_name, suffix, drive_auth=None):
   path = download_drive_file(sanitize_key(excel['key']), drive_auth)
-  sheet_name = pd.ExcelFile(path).sheet_names[excel['sheet']] if isinstance(excel['sheet'], int) else excel['sheet']
   ef = pd.read_excel(path,sheet_name=sheet_name)
   ef = ef.append(df[ef.columns.values], ignore_index = True)
   with pd.ExcelWriter(path,  engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
@@ -119,10 +118,13 @@ def export_unique(df, exports, gspread_auth=None, drive_auth=None):
     outputText = ''
     excel = export['excel']
     uniques = len(uf)
+    sheet_name = excel['sheet']
+    if str(excel['sheet']).isdigit():
+      pd.ExcelFile(path).sheet_names[excel['sheet']]
     if uniques > 0:
       for index, row in uf[list(lf.columns)].iterrows():
           list_sheet.append_rows(values=[list(row.values)])
-      path, name = export_to_template(uf, excel, suffix, drive_auth)
+      path, name = export_to_template(uf, excel, sheet_name, suffix, drive_auth)
       outputText = ', created '+path
     outputs.append([uf, path])
     print('\tNew '+name+':\t'+str(uniques)+outputText)
