@@ -158,12 +158,18 @@ def export_dataframe(df, exports, columns, gspread_auth=None, drive_auth=None):
     outputs.append([ef, out_path])
   return list(map(list,list(zip(*outputs))))
 
-def get_df_from_inputs(inputs, defaults, calculations, gspread_auth=None):
+def split_all(string, split_chars):
+  out_string = string
+  for s in split_chars:
+    out_string = string.split(s)[0]
+  return out_string
+
+def get_df_from_inputs(inputs, defaults, calculations, gspread_auth=None, split_chars = ['\n','?','(']):
   dfs = []
   for input in inputs:
     print('\t'+'https://docs.google.com/spreadsheets/d/'+input['key']+'/edit')
     af = get_df_from_drive(input, defaults=defaults, gspread_auth=gspread_auth)[0]
-    af.columns = [((c.split('\n')[0]).split('?')[0]).strip().upper() for c in af.columns] 
+    af.columns = [split_all(c, split_chars).strip().upper() for c in af.columns] 
     dfs.append(af)
   df = pd.concat(dfs)
   if len(df) == 0:
