@@ -9,6 +9,7 @@ import time
 import os
 import json
 import uuid
+import random
 
 def get_gspread_auth(gc=None):
   return gspread.authorize(gc or GoogleCredentials.get_application_default())
@@ -70,7 +71,24 @@ def if_then_else(inputs, values):
   answers = [next(iter_inputs) if (v is None) else v for v in values]
   return answers[not question]
 
-def apply_function(df, function, input_value, args=None):
+def get_proxy_cat_no(inputs, index_combinations, length=16, prefix='PROXY', dashed=True):
+  seed = str(uuid.uuid4())
+  for c in index_combinations:
+    if all(inputs[c]):
+      seed = str(inputs[c].values)
+      break
+  random.seed(seed)
+  random_number = int(10**length*random.random())
+  random_padded = str(random_number).zfill(length)
+  random_dashed = random_padded[:4]+'-'+random_padded[4:8]+'-'+random_padded[8:12]+'-'+random_padded[12:]
+  cat_no = prefix+('-'+random_dashed if dashed else random_padded)
+  return cat_no
+
+def apply_function(df, config):
+  function = config['function']
+  input_column = config['input']
+  args = config.get('args')
+  kwargs = config.get('kwargs')
   functions = {
     'identity': lambda x: x,
     'constant': lambda x, y: y,
@@ -80,20 +98,22 @@ def apply_function(df, function, input_value, args=None):
     'strip_left': lambda x, y: x.lstrip(y),
     'use_dictionary': lambda x, y, z: y.get(x,z),
     'if_then_else': if_then_else,
-    'get_uuid': lambda x: uuid.uuid4(),
+    'get_proxy_cat_no': get_proxy_cat_no,
   }
   f = functions[function]
-  input = input_value
-  if input_value is None:
+  input = input_column
+  if input_column is None:
     input = df.columns.values[0]
-  elif str(input_value).isdigit():
-    input = df.columns[input_value]
-  kwargs = {}
+  elif str(input_column).isdigit():
+    input = df.columns[input_column]
+  apply_kwargs = {}
   if args is not None:
-    kwargs['args'] = args
+    apply_kwargs['args'] = args
+  if kwargs != None:
+    apply_kwargs.update(kwargs)
   if isinstance(input, list):
-    kwargs['axis'] = 1
-  return df[input].apply(f, **kwargs)
+    apply_kwargs['axis'] = 1
+  return df[input].apply(f, **apply_kwargs)
 
 def export_to_template(path, sheet_name, df, nick_names, suffix):
   ef = pd.read_excel(path,sheet_name=sheet_name)
@@ -112,12 +132,12 @@ def export_dataframe(df, exports, gspread_auth=None, drive_auth=None):
   for export in exports:
     nf, nick_names = get_df_from_columns(df, export['columns'])
     unique = export.get('unique')
-    nf['python_deduplicate_column'] = apply_function(nf, unique['function'], unique['column'], unique.get('args'))
+    nf['python_deduplicate_column'] = apply_function(nf, unique)
     ef = nf
     datatable = export.get('datatable')
     if datatable:
       lf, list_sheet = get_df_from_drive(export['datatable'], gspread_auth=gspread_auth)
-      list_dedup = apply_function(lf, unique['function'], unique['column'], unique.get('args'))
+      list_dedup = apply_function(lf, unique)
       ef = nf.loc[[(u not in list_dedup.values) for u in nf['python_deduplicate_column']]].copy()
     ef = ef.drop_duplicates(subset='python_deduplicate_column', keep='last')
     ef = ef.drop('python_deduplicate_column', axis=1)
@@ -147,7 +167,7 @@ def get_df_from_inputs(inputs, defaults, calculations, gspread_auth=None):
   if len(df) == 0:
     return None
   for calc in calculations:
-    df[calc['name']] = apply_function(df, calc['function'], calc['input'], calc.get('args'))
+    df[calc['name']] = apply_function(df, calc['function'], calc['input'], calc.get('args'), calc.get('kwargs'))
     required_values = calc.get('required_values')
     if required_values is not None:
       non_compliant = df.loc[[c not in required_values for c in df[calc['name']]]]
@@ -251,9 +271,9 @@ def update_dataset(settings, gspread_auth=None, drive_auth=None):
 def update_datasets(settings_location):
   gspread_auth, drive_auth = get_auths()
   run_settings = get_settings(settings_location, drive_auth)
-  datasets = run_settings['datasets']
-  if not datasets:
+  if not run_settings:
     print('No settings found.')
-    return get_nothing_response(2)
+    return None
+  datasets = run_settings['datasets']
   ans = [update_dataset(d, gspread_auth=gspread_auth, drive_auth=drive_auth) for d in datasets]
   return ans
