@@ -70,7 +70,7 @@ def export_to_template(df, excel, suffix, drive_auth=None):
     ef.to_excel(writer, sheet_name=sheet_name, index=False)
   new_path = 'New_'+sheet_name+'_'+suffix+'.xlsx'
   os.rename(path, new_path)
-  return new_path
+  return new_path, sheet_name
 
 def if_then_else(inputs, values):
   iter_inputs = iter(inputs)
@@ -91,7 +91,11 @@ def apply_function(df, function, input_value, args=None):
     'if_then_else': if_then_else,
   }
   f = functions[function]
-  input = input_value if input_value is not None else df.columns.values[0]
+  input = input_value
+  if input_value is None:
+    input = df.columns.values[0]
+  elif isinstance(input_value, int):
+    input = df.columns[input_value]
   kwargs = {}
   if args is not None:
     kwargs['args'] = args
@@ -118,10 +122,10 @@ def export_unique(df, exports, gspread_auth=None, drive_auth=None):
     if uniques > 0:
       for index, row in uf[list(lf.columns)].iterrows():
           list_sheet.append_rows(values=[list(row.values)])
-      path = export_to_template(uf, excel, suffix, drive_auth)
+      path, name = export_to_template(uf, excel, suffix, drive_auth)
       outputText = ', created '+path
     outputs.append([uf, path])
-    print('\tNew '+str(excel['sheet'])+':\t'+str(uniques)+outputText)
+    print('\tNew '+name+':\t'+str(uniques)+outputText)
   return list(map(list,list(zip(*outputs))))
 
 def get_df_from_inputs(inputs, defaults, calculations, gspread_auth=None):
