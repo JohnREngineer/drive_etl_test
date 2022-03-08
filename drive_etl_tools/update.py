@@ -7,7 +7,7 @@ import pandas as pd
 import time
 import os
 import json
-from functools import reduce
+import uuid
 
 def get_gspread_auth(gc=None):
   return gspread.authorize(gc or GoogleCredentials.get_application_default())
@@ -78,6 +78,7 @@ def apply_function(df, function, input_value, args=None):
     'strip_left': lambda x, y: x.lstrip(y),
     'use_dictionary': lambda x, y, z: y.get(x,z),
     'if_then_else': if_then_else,
+    'get_uuid': lambda x: uuid.uuid4(),
   }
   f = functions[function]
   input = input_value
