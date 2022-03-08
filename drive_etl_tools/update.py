@@ -120,7 +120,8 @@ def export_unique(df, exports, gspread_auth=None, drive_auth=None):
     uniques = len(uf)
     sheet_name = excel['sheet']
     if str(excel['sheet']).isdigit():
-      pd.ExcelFile(path).sheet_names[excel['sheet']]
+      xl = pd.ExcelFile(path)
+      sheet_name = xl.sheet_names[excel['sheet']]
     if uniques > 0:
       for index, row in uf[list(lf.columns)].iterrows():
           list_sheet.append_rows(values=[list(row.values)])
