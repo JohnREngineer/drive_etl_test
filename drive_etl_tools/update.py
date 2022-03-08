@@ -122,11 +122,11 @@ def export_unique(df, exports, gspread_auth=None, drive_auth=None):
     print('\tNew '+excel['sheet']+':\t'+str(uniques)+outputText)
   return list(map(list,list(zip(*outputs))))
 
-def get_df_from_inputs(inputs, calculations, gspread_auth=None):
+def get_df_from_inputs(inputs, defaults, calculations, gspread_auth=None):
   dfs = []
   for input in inputs:
     print('\t'+'https://docs.google.com/spreadsheets/d/'+input['key']+'/edit')
-    dfs.append(get_df_from_drive(input, defaults=inputs['defaults'], gspread_auth=gspread_auth)[0])
+    dfs.append(get_df_from_drive(input, defaults=defaults, gspread_auth=gspread_auth)[0])
   df = pd.concat(dfs)
   if len(df) == 0:
     return None
@@ -216,28 +216,28 @@ def get_inputs(inputs, gspread_auth=None, drive_auth=None):
 def get_nothing_response(n):
   return [None for _ in range(n)], []
 
-def update_dataset(dataset, gspread_auth=None, drive_auth=None):
-  inputs = get_inputs(dataset['inputs'], gspread_auth, drive_auth)
-  if inputs:
+def update_dataset(settings, gspread_auth=None, drive_auth=None):
+  input_keys = get_inputs(settings['inputs'], gspread_auth, drive_auth)
+  if input_keys:
     print('Inputs:')      
   else:
     print('No inputs found.')
-    return get_nothing_response(len(dataset['exports']))
-  df = get_df_from_inputs(inputs, dataset['calculations'], gspread_auth=gspread_auth)
+    return get_nothing_response(len(settings['exports']))
+  df = get_df_from_inputs(input_keys, settings['defaults'], settings['calculations'], gspread_auth=gspread_auth)
   if df is None:
     print('\nAll input files are empty.')
-    return get_nothing_response(len(dataset['exports']))
+    return get_nothing_response(len(settings['exports']))
   else:
     print('Results:')
-  nfs, files = export_unique(df, dataset['exports'], gspread_auth=gspread_auth, drive_auth=drive_auth)
+  nfs, files = export_unique(df, settings['exports'], gspread_auth=gspread_auth, drive_auth=drive_auth)
   return nfs, files
 
 def update_datasets(settings_location):
   gspread_auth, drive_auth = get_auths()
-  settings = get_settings(settings_location, drive_auth)
-  datasets = settings['datasets']
-  if not settings:
+  run_settings = get_settings(settings_location, drive_auth)
+  datasets = run_settings['datasets']
+  if not datasets:
     print('No settings found.')
     return get_nothing_response(2)
-  ans = [update_dataset(dataset, gspread_auth=gspread_auth, drive_auth=drive_auth) for dataset in datasets]
+  ans = [update_dataset(d, gspread_auth=gspread_auth, drive_auth=drive_auth) for d in datasets]
   return ans
