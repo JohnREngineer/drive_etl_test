@@ -61,16 +61,6 @@ def get_df_from_drive(location, defaults={'sheet':0, 'headers':0, 'start':1, 'en
   df = df.reset_index(drop=True)
   return df, sh
 
-def export_to_template(df, excel, sheet_name, suffix, drive_auth=None):
-  path = download_drive_file(sanitize_key(excel['key']), drive_auth)
-  ef = pd.read_excel(path,sheet_name=sheet_name)
-  ef = ef.append(df[ef.columns.values], ignore_index = True)
-  with pd.ExcelWriter(path,  engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
-    ef.to_excel(writer, sheet_name=sheet_name, index=False)
-  new_path = 'New_'+sheet_name+'_'+suffix+'.xlsx'
-  os.rename(path, new_path)
-  return new_path, sheet_name
-
 def if_then_else(inputs, values):
   iter_inputs = iter(inputs)
   question = next(iter_inputs)
@@ -102,6 +92,15 @@ def apply_function(df, function, input_value, args=None):
     kwargs['axis'] = 1
   return df[input].apply(f, **kwargs)
 
+def export_to_template(path, df, excel, sheet_name, suffix):
+  ef = pd.read_excel(path,sheet_name=sheet_name)
+  ef = ef.append(df[ef.columns.values], ignore_index = True)
+  with pd.ExcelWriter(path,  engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
+    ef.to_excel(writer, sheet_name=sheet_name, index=False)
+  new_path = 'New_'+sheet_name+'_'+suffix+'.xlsx'
+  os.rename(path, new_path)
+  return new_path, sheet_name
+
 def export_unique(df, exports, gspread_auth=None, drive_auth=None):
   outputs = []
   suffix = str(int(time.time()))
@@ -114,21 +113,19 @@ def export_unique(df, exports, gspread_auth=None, drive_auth=None):
     uf = nf.loc[[(u not in list_dedup.values) for u in nf['python_deduplicate_column']]].copy()
     uf = uf.drop_duplicates(subset='python_deduplicate_column', keep='last')
     uf = uf.drop('python_deduplicate_column', axis=1)
-    path = None
-    outputText = ''
+    print('\tNew '+sheet_name+':\t'+str(len(uf)))
     excel = export['excel']
-    uniques = len(uf)
+    path = download_drive_file(sanitize_key(excel['key']), drive_auth)
     sheet_name = excel['sheet']
-    if str(excel['sheet']).isdigit():
+    if str(sheet_name).isdigit():
       xl = pd.ExcelFile(path)
-      sheet_name = xl.sheet_names[excel['sheet']]
-    if uniques > 0:
+      sheet_name = xl.sheet_names[int(sheet_name)]
+    if len(uf) > 0:
       for index, row in uf[list(lf.columns)].iterrows():
           list_sheet.append_rows(values=[list(row.values)])
       path, name = export_to_template(uf, excel, sheet_name, suffix, drive_auth)
-      outputText = ', created '+path
+      print('\tCreated '+path)
     outputs.append([uf, path])
-    print('\tNew '+name+':\t'+str(uniques)+outputText)
   return list(map(list,list(zip(*outputs))))
 
 def get_df_from_inputs(inputs, defaults, calculations, gspread_auth=None):
