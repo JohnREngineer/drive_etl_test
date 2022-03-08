@@ -172,6 +172,7 @@ def get_df_from_inputs(inputs, defaults, calculations, gspread_auth=None, split_
     af.columns = [split_all(c, split_chars).strip().upper() for c in af.columns] 
     dfs.append(af)
   df = pd.concat(dfs)
+  print(df)
   if len(df) == 0:
     return None
   for calc in calculations:
