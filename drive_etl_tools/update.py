@@ -94,7 +94,7 @@ def apply_function(df, function, input_value, args=None):
   input = input_value
   if input_value is None:
     input = df.columns.values[0]
-  elif isinstance(input_value, int):
+  elif str(input_value).isdigit():
     input = df.columns[input_value]
   kwargs = {}
   if args is not None:
