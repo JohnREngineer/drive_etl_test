@@ -167,7 +167,7 @@ def get_df_from_inputs(inputs, defaults, calculations, gspread_auth=None):
   if len(df) == 0:
     return None
   for calc in calculations:
-    df[calc['name']] = apply_function(df, calc['function'], calc['input'], calc.get('args'), calc.get('kwargs'))
+    df[calc['name']] = apply_function(df, calc)
     required_values = calc.get('required_values')
     if required_values is not None:
       non_compliant = df.loc[[c not in required_values for c in df[calc['name']]]]
