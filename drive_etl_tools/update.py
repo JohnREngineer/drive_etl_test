@@ -100,7 +100,7 @@ def export_to_template(path, sheet_name, df, nick_names, suffix):
   ef = ef.append(df, ignore_index=True)
   ef.columns = nick_names
   with pd.ExcelWriter(path,  engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
-    ef.to_excel(writer, sheet_name=sheet_name, index=False, mangle_dupe_cols=False)
+    ef.to_excel(writer, sheet_name=sheet_name, index=False)
   new_path = 'New_'+sheet_name+'_'+suffix+'.xlsx'
   os.rename(path, new_path)
   return new_path
