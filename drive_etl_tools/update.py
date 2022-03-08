@@ -216,7 +216,7 @@ def get_inputs(inputs, gspread_auth=None, drive_auth=None):
 def get_nothing_response(n):
   return [None for _ in range(n)], []
 
-def update_datasets(config):
+def update_dataset(config):
   gspread_auth, drive_auth = get_auths()
   settings = get_settings_data(config['settings'], drive_auth)
   if not settings:
@@ -240,3 +240,8 @@ def update_datasets(config):
     print('Results:')
   nfs, files = export_unique(df, settings['exports'], gspread_auth=gspread_auth, drive_auth=drive_auth)
   return nfs, files
+
+def update_datasets(config):
+  input_datasets = config['input_datasets']
+  ans = [update_dataset(c) for c in input_datasets]
+  return ans
