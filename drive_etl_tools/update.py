@@ -113,13 +113,13 @@ def export_unique(df, exports, gspread_auth=None, drive_auth=None):
     uf = nf.loc[[(u not in list_dedup.values) for u in nf['python_deduplicate_column']]].copy()
     uf = uf.drop_duplicates(subset='python_deduplicate_column', keep='last')
     uf = uf.drop('python_deduplicate_column', axis=1)
-    print('\tNew '+sheet_name+':\t'+str(len(uf)))
     excel = export['excel']
     path = download_drive_file(sanitize_key(excel['key']), drive_auth)
     sheet_name = excel['sheet']
     if str(sheet_name).isdigit():
       xl = pd.ExcelFile(path)
       sheet_name = xl.sheet_names[int(sheet_name)]
+    print('\tNew '+sheet_name+':\t'+str(len(uf)))
     if len(uf) > 0:
       for index, row in uf[list(lf.columns)].iterrows():
           list_sheet.append_rows(values=[list(row.values)])
