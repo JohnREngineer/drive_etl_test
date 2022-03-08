@@ -163,7 +163,7 @@ def get_df_from_inputs(inputs, defaults, calculations, gspread_auth=None):
   for input in inputs:
     print('\t'+'https://docs.google.com/spreadsheets/d/'+input['key']+'/edit')
     af = get_df_from_drive(input, defaults=defaults, gspread_auth=gspread_auth)[0]
-    af.columns = [(c.split('\n')[0]).strip().upper() for c in af.columns] 
+    af.columns = [((c.split('\n')[0]).split('?')[0]).strip().upper() for c in af.columns] 
     dfs.append(af)
   df = pd.concat(dfs)
   if len(df) == 0:
