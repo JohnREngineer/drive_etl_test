@@ -97,6 +97,7 @@ def apply_function(df, function, input_value, args=None):
 
 def export_to_template(path, sheet_name, df, nick_names, suffix):
   ef = pd.read_excel(path,sheet_name=sheet_name)
+  ef.columns = df.columns
   ef = ef.append(df, ignore_index=True)
   print(ef.columns)
   print(nick_names)
