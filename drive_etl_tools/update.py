@@ -1,4 +1,5 @@
 from re import S
+from tokenize import PseudoToken
 from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
 import gspread
@@ -33,10 +34,11 @@ def download_drive_file(key, drive_auth=None):
   return path
 
 def get_df_from_columns(df, columns):
-  names, calculations = list(map(list,list(zip(*columns))))
+  names, calculations, psuedonames = list(map(list,list(zip(*columns))))
+  psuedonames = [p or n for n,p in zip(names,psuedonames)]
   nf = df[calculations].copy()
   nf.columns = list(names)
-  return nf
+  return nf, psuedonames
 
 def sanitize_key(key):
   new_key = key
@@ -93,11 +95,12 @@ def apply_function(df, function, input_value, args=None):
     kwargs['axis'] = 1
   return df[input].apply(f, **kwargs)
 
-def export_to_template(path, sheet_name, df, suffix):
+def export_to_template(path, sheet_name, df, nick_names, suffix):
   ef = pd.read_excel(path,sheet_name=sheet_name)
   ef = ef.append(df, ignore_index=True)
+  ef.columns = nick_names
   with pd.ExcelWriter(path,  engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
-    ef.to_excel(writer, sheet_name=sheet_name, index=False)
+    ef.to_excel(writer, sheet_name=sheet_name, index=False, mangle_dupe_cols=False)
   new_path = 'New_'+sheet_name+'_'+suffix+'.xlsx'
   os.rename(path, new_path)
   return new_path
@@ -106,7 +109,7 @@ def export_dataframe(df, exports, gspread_auth=None, drive_auth=None):
   outputs = []
   suffix = str(int(time.time()))
   for export in exports:
-    nf = get_df_from_columns(df, export['columns'])
+    nf, nick_names = get_df_from_columns(df, export['columns'])
     unique = export.get('unique')
     nf['python_deduplicate_column'] = apply_function(nf, unique['function'], unique['column'], unique.get('args'))
     ef = nf
@@ -128,7 +131,7 @@ def export_dataframe(df, exports, gspread_auth=None, drive_auth=None):
       if datatable:
         for _, row in ef.iterrows():
             list_sheet.append_rows(values=[list(row.values)])
-      path = export_to_template(path, sheet_name, ef, suffix)
+      path = export_to_template(path, sheet_name, ef, nick_names, suffix)
       print('\tCreated '+path)
     outputs.append([ef, path])
   return list(map(list,list(zip(*outputs))))
