@@ -165,7 +165,7 @@ def get_df_from_inputs(inputs, defaults, calculations, gspread_auth=None):
     dfs.append(get_df_from_drive(input, defaults=defaults, gspread_auth=gspread_auth)[0])
   try:
     df = pd.concat(dfs)
-  else:
+  except:
     print([d.columns for d in dfs])
   if len(df) == 0:
     return None
