@@ -127,17 +127,17 @@ def export_to_template(path, sheet_name, df, nick_names, suffix):
   return new_path
 
 def export_dataframe(df, exports, columns, gspread_auth=None, drive_auth=None):
-  outputs = []
+  exports = []
   suffix = str(int(time.time()))
   for export, cols in zip(exports,columns):
     nf, nick_names = get_df_from_columns(df, cols)
-    unique = export.get('unique')
-    nf['python_deduplicate_column'] = apply_function(nf, unique)
+    unique_column = export.get('unique_column')
+    nf['python_deduplicate_column'] = apply_function(nf, unique_column)
     ef = nf
-    datatable = export.get('datatable')
-    if datatable:
-      lf, list_sheet = get_df_from_drive(export['datatable'], gspread_auth=gspread_auth)
-      list_dedup = apply_function(lf, unique)
+    reference_dataset = export.get('reference_dataset')
+    if reference_dataset:
+      rf, list_sheet = get_df_from_drive(export['reference_dataset'], gspread_auth=gspread_auth)
+      list_dedup = apply_function(rf, unique_column)
       ef = nf.loc[[(u not in list_dedup.values) for u in nf['python_deduplicate_column']]].copy()
     ef = ef.drop_duplicates(subset='python_deduplicate_column', keep='last')
     ef = ef.drop('python_deduplicate_column', axis=1)
@@ -148,15 +148,15 @@ def export_dataframe(df, exports, columns, gspread_auth=None, drive_auth=None):
       xl = pd.ExcelFile(path)
       sheet_name = xl.sheet_names[int(sheet_name)]
     print('\tNew '+sheet_name+':\t'+str(len(ef)))
-    out_path = None
+    export_path = None
     if len(ef) > 0:
-      if datatable:
+      if reference_dataset:
         for _, row in ef.iterrows():
             list_sheet.append_rows(values=[list(row.values)])
-      out_path = export_to_template(path, sheet_name, ef, nick_names, suffix)
-      print('\t\tCreated '+out_path)
-    outputs.append([ef, out_path])
-  return list(map(list,list(zip(*outputs))))
+      export_path = export_to_template(path, sheet_name, ef, nick_names, suffix)
+      print('\t\tCreated '+export_path)
+    exports.append([ef, export_path])
+  return list(map(list,list(zip(*exports))))
 
 def split_all(string, split_chars):
   out_string = string
