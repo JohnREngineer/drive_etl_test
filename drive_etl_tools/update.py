@@ -131,13 +131,13 @@ def export_dataframe(df, exports, columns, gspread_auth=None, drive_auth=None):
   suffix = str(int(time.time()))
   for export, cols in zip(exports,columns):
     nf, nick_names = get_df_from_columns(df, cols)
-    unique = export.get('unique')
-    nf['python_deduplicate_column'] = apply_function(nf, unique)
+    unique_column = export.get('unique_column')
+    nf['python_deduplicate_column'] = apply_function(nf, unique_column)
     ef = nf
     reference_dataset = export.get('reference_dataset')
     if reference_dataset:
       rf, list_sheet = get_df_from_drive(export['reference_dataset'], gspread_auth=gspread_auth)
-      list_dedup = apply_function(rf, unique)
+      list_dedup = apply_function(rf, unique_column)
       ef = nf.loc[[(u not in list_dedup.values) for u in nf['python_deduplicate_column']]].copy()
     ef = ef.drop_duplicates(subset='python_deduplicate_column', keep='last')
     ef = ef.drop('python_deduplicate_column', axis=1)
