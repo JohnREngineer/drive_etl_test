@@ -130,7 +130,6 @@ def export_dataframe(df, exports, columns, gspread_auth=None, drive_auth=None):
   outputs = []
   suffix = str(int(time.time()))
   for export, cols in zip(exports,columns):
-    print(cols)
     nf, nick_names = get_df_from_columns(df, cols)
     unique = export.get('unique')
     nf['python_deduplicate_column'] = apply_function(nf, unique)
