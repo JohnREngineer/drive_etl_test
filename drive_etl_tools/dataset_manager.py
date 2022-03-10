@@ -182,7 +182,7 @@ class DatasetManager:
     }
     return settings_getters[settings_location['type']](settings_location)
 
-  def __import_module_from_path(path):
+  def __import_module_from_path(self, path):
     module_path = pathlib.Path(path).resolve()
     module_name = module_path.stem  # 'path/x.py' -> 'x'
     spec = importlib.util.spec_from_file_location(module_name, module_path)
