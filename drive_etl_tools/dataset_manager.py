@@ -196,6 +196,7 @@ class DatasetManager:
     path = self.__download_drive_file(key)
     functions = self.__import_module_from_path(path)
     self.etl_functions = functions.get_etl_functions()
+    print(self.etl_functions)
     print('\tLoading https://drive.google.com/file/d/'+key+'/edit')
     return functions
 
