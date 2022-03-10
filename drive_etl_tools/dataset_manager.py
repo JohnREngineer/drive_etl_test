@@ -96,6 +96,7 @@ class DatasetManager:
       nf, nick_names = self.__get_df_from_columns(df, cols)
       unique_column = export.get('unique_column')
       ef = nf
+      reference_dataset = None
       if unique_column:
         nf['python_deduplicate_column'] = self.__apply_function(nf, unique_column)
         reference_dataset = export.get('reference_dataset')
