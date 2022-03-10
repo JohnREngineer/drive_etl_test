@@ -263,7 +263,7 @@ class DatasetManager:
     return [None for _ in range(n)], []
 
   def __update_start_time(self):
-    self.startime = str(int(time.time()))
+    self.start_time_unix = str(int(time.time()))
 
   def __update_dataset(self, settings):
     input_settings = settings['inputs']
