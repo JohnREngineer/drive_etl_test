@@ -16,7 +16,7 @@ class DatasetManager:
 
   def __initialize_credentials(self):
     self.google_credentials = GoogleCredentials.get_application_default()
-    self.gspread = gspread.authorize(self.google_credentials)
+    self.gss_client = gspread.authorize(self.google_credentials)
     gauth = GoogleAuth()
     gauth.credentials = self.google_credentials
     self.drive = GoogleDrive(gauth)
@@ -44,7 +44,7 @@ class DatasetManager:
     return new_key
 
   def __get_df_from_drive(self, location, defaults={'sheet':0, 'headers':0, 'start':1, 'end':None}):
-    wb = gspread.open_by_key(self.__sanitize_key(location['key']))
+    wb = self.gss_client.open_by_key(self.__sanitize_key(location['key']))
     l = location
     l.update({k: v for k, v in defaults.items() if not location.get(k)})
     sheet = l['sheet']
