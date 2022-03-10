@@ -1,3 +1,4 @@
+import pathlib
 from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
 import gspread
@@ -6,7 +7,8 @@ import pandas as pd
 import time
 import os
 import json
-import importlib.util
+import importlib
+import sys
 
 class DatasetManager:
   def __init__(self):
@@ -180,13 +182,20 @@ class DatasetManager:
     }
     return settings_getters[settings_location['type']](settings_location)
 
+  def __import_module_from_path(path):
+    module_path = pathlib.Path(path).resolve()
+    module_name = module_path.stem  # 'path/x.py' -> 'x'
+    spec = importlib.util.spec_from_file_location(module_name, module_path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
   def __get_functions_from_key(self, key):
     key = self.__sanitize_key(key)
     path = self.__download_drive_file(key)
-    spec = importlib.util.spec_from_file_location('functions', path)
-    functions = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(functions)
-    self.etl_functions = functions.get_functions()
+    functions = self.__import_module_from_path(path)
+    self.etl_functions = functions.get_etl_functions()
     print('\tLoading https://drive.google.com/file/d/'+key+'/edit')
     return functions
 
