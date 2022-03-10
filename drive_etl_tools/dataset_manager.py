@@ -277,7 +277,7 @@ class DatasetManager:
       print('No inputs found.')
       return self.__get_nothing_response(len(export_settings))
     df = self.__get_df_from_inputs(input_locations, input_settings['defaults'], settings['calculations'])
-    if df:
+    if df is not None:
       print('Results:')
     else:
       print('\nAll input files are empty.')
