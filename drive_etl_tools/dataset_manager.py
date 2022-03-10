@@ -12,7 +12,7 @@ class DatasetManager:
   def __init__(self):
     self.__initialize_credentials()
     self.start_time_unix = ''
-    self.functions = {}
+    self.etl_functions = {}
 
   def __initialize_credentials(self):
     self.google_credentials = GoogleCredentials.get_application_default()
@@ -62,7 +62,7 @@ class DatasetManager:
     input_column = config['input']
     args = config.get('args')
     kwargs = config.get('kwargs')
-    f = self.functions[function]
+    f = self.etl_functions[function]
     input = input_column
     if input_column is None:
       input = df.columns.values[0]
@@ -183,10 +183,10 @@ class DatasetManager:
   def __get_functions_from_key(self, key):
     key = self.__sanitize_key(key)
     path = self.__download_drive_file(key)
-    spec = importlib.util.spec_from_file_location("functions", path)
+    spec = importlib.util.spec_from_file_location('functions', path)
     functions = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(functions)
-    self.functions = functions.get_functions()
+    self.etl_functions = functions.get_functions()
     print('\tLoading https://drive.google.com/file/d/'+key+'/edit')
     return functions
 
@@ -196,7 +196,7 @@ class DatasetManager:
     functions = []
     for f in files:
       print(f.get('mimeType'))
-      if f.get('mimeType') != 'nothing':
+      if f.get('mimeType') == 'text/x-python':
         functions.append({'date': f.get('modifiedDate'), 'key': f.get('id'), 'title': f.get('title')})
     if not functions:
       return None
@@ -213,7 +213,7 @@ class DatasetManager:
         'key': lambda s: self.__get_functions_from_key(s.get('key')),
         'folder': lambda s: self.__get_functions_from_folder(s.get('key'))
     }
-    self.functions = functions_getters[functions_location['type']](functions_location)
+    self.etl_functions = functions_getters[functions_location['type']](functions_location)
 
   def __get_inputs_from_sheet(self, location, defaults={'sheet':0, 'headers':0, 'start':1, 'end':None}):
     records = self.__get_df_from_drive(location)[0].to_dict('records')
