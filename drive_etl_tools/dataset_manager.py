@@ -8,7 +8,7 @@ import os
 import json
 import importlib.util
 
-class DriveETLTools:
+class DatasetManager:
   def __init__(self):
     self.__initialize_credentials()
     self.start_time_unix = ''
@@ -174,7 +174,7 @@ class DriveETLTools:
     print('Settings:')
     settings_getters = {
         'object': lambda s: s['object'],
-        'path': lambda s: self.load_json(s['path']),
+        'path': lambda s: self.__load_json(s['path']),
         'key': lambda s: self.__get_settings_from_key(s.get('key')),
         'folder': lambda s: self.__get_settings_from_folder(s.get('key'))
     }
@@ -205,15 +205,15 @@ class DriveETLTools:
     functions = self.__get_functions_from_key(first.get('key'))
     return functions
 
-  def __get_functions(self, functions_location):
+  def __update_functions(self, functions_location):
     print('functions:')
     functions_getters = {
         'object': lambda s: s['object'],
-        'path': lambda s: self.load_json(s['path']),
+        'path': lambda s: self.__load_json(s['path']),
         'key': lambda s: self.__get_functions_from_key(s.get('key')),
         'folder': lambda s: self.__get_functions_from_folder(s.get('key'))
     }
-    return functions_getters[functions_location['type']](functions_location)
+    self.functions = functions_getters[functions_location['type']](functions_location)
 
   def __get_inputs_from_sheet(self, location, defaults={'sheet':0, 'headers':0, 'start':1, 'end':None}):
     records = self.__get_df_from_drive(location)[0].to_dict('records')
@@ -262,7 +262,7 @@ class DriveETLTools:
     input_settings = settings['inputs']
     input_locations = self.__get_inputs(input_settings)
     export_settings = settings['exports']
-    functions = self.__get_functions(settings['functions'])
+    self.__update_functions(settings['functions'])
     if input_locations:
       print('Inputs:')      
     else:
@@ -277,7 +277,7 @@ class DriveETLTools:
     output = self.__export_dataframe(df, export_settings, settings['columns'])
     return output
 
-  def update_datasets(self, settings_location):
+  def run_update(self, settings_location):
     self.__update_start_time()
     run_settings = self.__get_settings(settings_location)
     if not run_settings:
