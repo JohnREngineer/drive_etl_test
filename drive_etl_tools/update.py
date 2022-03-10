@@ -8,7 +8,7 @@ import os
 import json
 import importlib.util
 
-class Complex:
+class DriveETLTools:
   def __init__(self):
     self.__initialize_credentials()
     self.start_time_unix = ''
@@ -28,14 +28,14 @@ class Complex:
     f.GetContentFile(path)
     return path
 
-  def __get_df_from_columns(df, columns):
+  def __get_df_from_columns(self, df, columns):
     names, calculations, psuedonames = list(map(list,list(zip(*columns))))
     psuedonames = [p or n for n,p in zip(names,psuedonames)]
     nf = df[calculations].copy()
     nf.columns = list(names)
     return nf, psuedonames
 
-  def __sanitize_key(key):
+  def __sanitize_key(self, key):
     new_key = key
     if '/d/' in key:
       new_key = key.split('/')[-2]
@@ -119,7 +119,7 @@ class Complex:
       outputs.append([ef, out_path])
     return list(map(list,list(zip(*outputs))))
 
-  def __split_all(string, split_chars):
+  def __split_all(self, string, split_chars):
     out_string = string
     for s in split_chars:
       out_string = out_string.split(s)[0]
@@ -145,13 +145,15 @@ class Complex:
                           ', '.join([str(n+input['start']+1) for n in non_compliant.index.values]))
     return df
 
+  def __load_json(self, path):
+    with open(path, 'r') as f:
+      return json.load(f)
+
   def __get_settings_from_key(self, key):
     key = self.__sanitize_key(key)
-    settings = None
-    path = self.__download_drive_file(key)
-    with open(path, 'r') as f:
-      settings = json.load(f)
     print('\tLoading https://drive.google.com/file/d/'+key+'/edit')
+    path = self.__download_drive_file(key)
+    settings = self.__load_json(path)
     return settings
 
   def __get_settings_from_folder(self, key):
@@ -160,7 +162,7 @@ class Complex:
     settings = []
     for f in files:
       if f.get('mimeType') == 'application/json':
-        settings.append({'date':f.get('createdDate'), 'key':f.get('id'), 'title':f.get('title')})
+        settings.append({'date':f.get('modifiedDate'), 'key':f.get('id'), 'title':f.get('title')})
     if not settings:
       return None
     first = sorted(settings, key=lambda x: x.get('date'), reverse=True)[0]
@@ -180,7 +182,6 @@ class Complex:
 
   def __get_functions_from_key(self, key):
     key = self.__sanitize_key(key)
-    functions = None
     path = self.__download_drive_file(key)
     spec = importlib.util.spec_from_file_location("functions", path)
     functions = importlib.util.module_from_spec(spec)
@@ -196,7 +197,7 @@ class Complex:
     for f in files:
       print(f.get('mimeType'))
       if f.get('mimeType') != 'nothing':
-        functions.append({'date':f.get('createdDate'), 'key':f.get('id')})
+        functions.append({'date':f.get('modifiedDate'), 'key':f.get('id')})
     if not functions:
       return None
     first = sorted(functions, key=lambda x: x.get('date'), reverse=True)[0]
@@ -251,7 +252,7 @@ class Complex:
     print(inputs_prints[inputs['type']](self.__sanitize_key(inputs['location'].get('key',''))))
     return result
 
-  def __get_nothing_response(n):
+  def __get_nothing_response(self, n):
     return [None for _ in range(n)], []
 
   def __update_start_time(self):
@@ -261,6 +262,7 @@ class Complex:
     input_settings = settings['inputs']
     input_locations = self.__get_inputs(input_settings)
     export_settings = settings['exports']
+    functions = self.__get_functions(settings['functions'])
     if input_locations:
       print('Inputs:')      
     else:
@@ -272,8 +274,8 @@ class Complex:
     else:
       print('\nAll input files are empty.')
       return self.__get_nothing_response(len(export_settings))
-    nfs, files = self.__export_dataframe(df, export_settings, settings['columns'])
-    return nfs, files
+    output = self.__export_dataframe(df, export_settings, settings['columns'])
+    return output
 
   def update_datasets(self, settings_location):
     self.__update_start_time()
@@ -282,5 +284,5 @@ class Complex:
       print('No settings found.')
       return None
     datasets = run_settings['datasets']
-    ans = [self.__update_dataset(d) for d in datasets]
-    return ans
+    output = [self.__update_dataset(d) for d in datasets]
+    return output
