@@ -95,15 +95,16 @@ class DatasetManager:
     for export, cols in zip(exports,columns):
       nf, nick_names = self.__get_df_from_columns(df, cols)
       unique_column = export.get('unique_column')
-      nf['python_deduplicate_column'] = self.__apply_function(nf, unique_column)
       ef = nf
-      reference_dataset = export.get('reference_dataset')
-      if reference_dataset:
-        rf, list_sheet = self.__get_df_from_drive(export['reference_dataset'])
-        list_dedup = self.__apply_function(rf, unique_column)
-        ef = nf.loc[[(u not in list_dedup.values) for u in nf['python_deduplicate_column']]].copy()
-      ef = ef.drop_duplicates(subset='python_deduplicate_column', keep='last')
-      ef = ef.drop('python_deduplicate_column', axis=1)
+      if unique_column:
+        nf['python_deduplicate_column'] = self.__apply_function(nf, unique_column)
+        reference_dataset = export.get('reference_dataset')
+        if reference_dataset:
+          rf, list_sheet = self.__get_df_from_drive(export['reference_dataset'])
+          list_dedup = self.__apply_function(rf, unique_column)
+          ef = nf.loc[[(u not in list_dedup.values) for u in nf['python_deduplicate_column']]].copy()
+        ef = ef.drop_duplicates(subset='python_deduplicate_column', keep='last')
+        ef = ef.drop('python_deduplicate_column', axis=1)
       excel = export['excel']
       path = self.__download_drive_file(self.__sanitize_key(excel['key']))
       sheet_name = excel['sheet']
