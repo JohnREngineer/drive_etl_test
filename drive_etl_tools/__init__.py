@@ -1,1 +1,1 @@
-from .update import update_datasets
+from .dataset_manager import DatasetManager
