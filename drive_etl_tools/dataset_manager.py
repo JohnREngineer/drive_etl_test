@@ -203,7 +203,6 @@ class DatasetManager:
     files = self.drive.ListFile({'q': "'{}' in parents and trashed=false".format(key)}).GetList()
     functions = []
     for f in files:
-      print(f.get('mimeType'))
       if f.get('mimeType') == 'text/x-python':
         functions.append({'date': f.get('modifiedDate'), 'key': f.get('id'), 'title': f.get('title')})
     if not functions:
@@ -214,7 +213,7 @@ class DatasetManager:
     return functions
 
   def __update_functions(self, functions_location):
-    print('functions:')
+    print('Functions:')
     functions_getters = {
         'object': lambda s: s['object'],
         'path': lambda s: self.__load_json(s['path']),
