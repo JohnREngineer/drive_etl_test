@@ -162,7 +162,7 @@ class DatasetManager:
     settings = []
     for f in files:
       if f.get('mimeType') == 'application/json':
-        settings.append({'date':f.get('modifiedDate'), 'key':f.get('id'), 'title':f.get('title')})
+        settings.append({'date': f.get('modifiedDate'), 'key': f.get('id'), 'title': f.get('title')})
     if not settings:
       return None
     first = sorted(settings, key=lambda x: x.get('date'), reverse=True)[0]
@@ -197,7 +197,7 @@ class DatasetManager:
     for f in files:
       print(f.get('mimeType'))
       if f.get('mimeType') != 'nothing':
-        functions.append({'date':f.get('modifiedDate'), 'key':f.get('id')})
+        functions.append({'date': f.get('modifiedDate'), 'key': f.get('id'), 'title': f.get('title')})
     if not functions:
       return None
     first = sorted(functions, key=lambda x: x.get('date'), reverse=True)[0]
@@ -234,7 +234,7 @@ class DatasetManager:
 
   def __get_inputs_from_folder(self, location):
     files = self.drive.ListFile({'q': "'{}' in parents and trashed=false".format(self.__sanitize_key(location['key']))}).GetList()
-    inputs = [{'key':f.get('id')} for f in files if f.get('mimeType') == 'application/vnd.google-apps.spreadsheet']
+    inputs = [{'key': f.get('id')} for f in files if f.get('mimeType') == 'application/vnd.google-apps.spreadsheet']
     return inputs
 
   def __get_inputs(self, inputs):
