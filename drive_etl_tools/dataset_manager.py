@@ -191,16 +191,14 @@ class DatasetManager:
     spec.loader.exec_module(module)
     return module
 
-  def __get_functions_from_key(self, key):
+  def __update_functions_from_key(self, key):
     key = self.__sanitize_key(key)
+    print('\tLoading https://drive.google.com/file/d/'+key+'/edit')
     path = self.__download_drive_file(key)
     functions = self.__import_module_from_path(path)
     self.etl_functions = functions.get_etl_functions()
-    print(self.etl_functions)
-    print('\tLoading https://drive.google.com/file/d/'+key+'/edit')
-    return functions
 
-  def __get_functions_from_folder(self, key):
+  def __update_functions_from_folder(self, key):
     key = self.__sanitize_key(key)
     files = self.drive.ListFile({'q': "'{}' in parents and trashed=false".format(key)}).GetList()
     functions = []
@@ -212,7 +210,7 @@ class DatasetManager:
       return None
     first = sorted(functions, key=lambda x: x.get('date'), reverse=True)[0]
     print('\tFound '+first['title']+' in https://drive.google.com/drive/folders/'+key)
-    functions = self.__get_functions_from_key(first.get('key'))
+    functions = self.__update_functions_from_key(first.get('key'))
     return functions
 
   def __update_functions(self, functions_location):
@@ -220,10 +218,10 @@ class DatasetManager:
     functions_getters = {
         'object': lambda s: s['object'],
         'path': lambda s: self.__load_json(s['path']),
-        'key': lambda s: self.__get_functions_from_key(s.get('key')),
-        'folder': lambda s: self.__get_functions_from_folder(s.get('key'))
+        'key': lambda s: self.__update_functions_from_key(s.get('key')),
+        'folder': lambda s: self.__update_functions_from_folder(s.get('key'))
     }
-    self.etl_functions = functions_getters[functions_location['type']](functions_location)
+    functions_getters[functions_location['type']](functions_location)
 
   def __get_inputs_from_sheet(self, location, defaults={'sheet':0, 'headers':0, 'start':1, 'end':None}):
     records = self.__get_df_from_drive(location)[0].to_dict('records')
