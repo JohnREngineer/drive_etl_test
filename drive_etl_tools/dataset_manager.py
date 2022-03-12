@@ -328,5 +328,5 @@ class DatasetManager:
   def run_update(self, settings_location):
     self.__update_start_time()
     run_settings = self.__get_settings(settings_location)
-    output = [self.__update_dataset(s) for s in run_settings['datasets']]
+    output = [self.__update_dataset(s) for s in run_settings['etls']]
     return output
