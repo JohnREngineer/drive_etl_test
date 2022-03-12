@@ -55,7 +55,7 @@ class DatasetManager:
         raise ValueError('Worksheet cannot be found at %'%(key))
       df = pd.DataFrame(sh.get_all_values())
       df.columns = df.iloc[int(headers)]
-      df = df.iloc[int(start):int(end)]
+      df = df.iloc[int(start):(int(end) if end else None)]
       df = df.reset_index(drop=True)
     return df, sh
 
