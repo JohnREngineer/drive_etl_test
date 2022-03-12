@@ -293,7 +293,9 @@ class DatasetManager:
     print('Inputs:')
     for location in input_locations:
       print('\t'+'https://docs.google.com/spreadsheets/d/'+location['key']+'/edit')
-      af = self.__get_df_from_drive(**location)[0]
+      full_location = defaults.copy()
+      full_location.update(location)
+      af = self.__get_df_from_drive(**full_location)[0]
       af.columns = [self.__split_all(c, split_chars).strip().upper() for c in af.columns] 
       dfs.append(af)
     df = pd.concat(dfs)
