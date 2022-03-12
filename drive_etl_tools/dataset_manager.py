@@ -1,4 +1,5 @@
 import pathlib
+from re import I
 from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
 import gspread
@@ -59,9 +60,9 @@ class DatasetManager:
       df = df.reset_index(drop=True)
     return df, sh
 
-  def __apply_function(self, df, function_name, inputs=None, args=None, kwargs=None):
+  def __apply_function(self, df, name=None, inputs=None, function=None, args=None, kwargs=None, inplace=False):
     # Get function
-    function = self.etl_functions[function_name]
+    apply_function = self.etl_functions[function]
     # Update input column
     #    Can't be '' here because '' could be an input column
     input_columns = df.columns.values[0] if (inputs is None) else inputs
@@ -73,10 +74,16 @@ class DatasetManager:
       apply_kwargs['args'] = args
     if kwargs is not None:
       apply_kwargs.update(kwargs)
-    if isinstance(inputs, list):
+    if isinstance(input_columns, list):
       apply_kwargs['axis'] = 1
     # Apply function to dataframe with input, args, and kwargs
-    return df[inputs].apply(function, **apply_kwargs)
+    new_column = df[input_columns].apply(apply_function, **apply_kwargs)
+    if inplace:
+      df_new = df.copy()
+      df_new[name] = new_column
+      return df_new
+    else:
+      return new_column
 
   def __split_all(self, string, split_chars):
     out_string = string
