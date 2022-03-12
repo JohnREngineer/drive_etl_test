@@ -60,8 +60,7 @@ class DatasetManager:
       df = df.reset_index(drop=True)
     return df, sh
 
-  def __apply_function(self, df, name=None, inputs=None, function=None, args=None, kwargs=None, inplace=False):
-    print(df.columns.values)
+  def __apply_function(self, df, inplace=False, name=None, inputs=None, function=None, args=None, kwargs=None):
     apply_function = self.etl_functions[function]
     #    Can't be '' here because '' could be an input column
     input_columns = df.columns.values[0] if (inputs is None) else inputs
@@ -305,9 +304,10 @@ class DatasetManager:
     df = input_df.copy()
     error_strings = []
     for calc in calculations:
+      required_values = calc.pop('required_values', None) # We do this first to remove required_values from calc
       df[calc['name']] = self.__apply_function(df, **calc)
-      if calc.get('required_values') is not None:
-        non_compliant = df.loc[[c not in calc['required_values'] for c in df[calc['name']]]]
+      if required_values is not None:
+        non_compliant = df.loc[[c not in required_values for c in df[calc['name']]]]
         if len(non_compliant) > 0:
           error_locations = ', '.join([str(n+input['start']+1) for n in non_compliant.index.values])
           error_strings.append('Non-compliant values for [%s] found in the following rows: %s' % (calc['name'], error_locations))
