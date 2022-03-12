@@ -61,9 +61,8 @@ class DatasetManager:
     return df, sh
 
   def __apply_function(self, df, name=None, inputs=None, function=None, args=None, kwargs=None, inplace=False):
-    # Get function
+    print(df.columns.values)
     apply_function = self.etl_functions[function]
-    # Update input column
     #    Can't be '' here because '' could be an input column
     input_columns = df.columns.values[0] if (inputs is None) else inputs
     if str(inputs).isdigit():
@@ -303,7 +302,6 @@ class DatasetManager:
   def __add_calculations(self, input_df, calculations):
     df = input_df.copy()
     error_strings = []
-    print(input_df)
     for calc in calculations:
       df[calc['name']] = self.__apply_function(df, **calc)
       if calc.get('required_values') is not None:
