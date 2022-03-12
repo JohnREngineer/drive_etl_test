@@ -46,18 +46,17 @@ class DatasetManager:
       new_key = key.split('folders/')[-1].split('?')[0]
     return new_key
 
-  def __get_df_from_drive(self, location, defaults={'sheet':0, 'headers':0, 'start':1, 'end':None}):
-    wb = self.gss_client.open_by_key(self.__sanitize_key(location['key']))
-    l = location
-    l.update({k: v for k, v in defaults.items() if not location.get(k)})
-    sheet = l['sheet']
-    sh = wb.get_worksheet(int(sheet)) if str(sheet).isnumeric() else wb.worksheet(sheet)
-    if not sh:
-      raise ValueError('Worksheet cannot be found at '+str(location))
-    df = pd.DataFrame(sh.get_all_values())
-    df.columns = df.iloc[l['headers']]
-    df = df.iloc[l['start']:l['end']]
-    df = df.reset_index(drop=True)
+  def __get_df_from_drive(self, key=None, sheet=0, headers=0, start=1, end=None):
+    df, sh = None, None
+    if key:
+      wb = self.gss_client.open_by_key(self.__sanitize_key(key))
+      sh = wb.get_worksheet(int(sheet)) if str(sheet).isnumeric() else wb.worksheet(sheet)
+      if not sh:
+        raise ValueError('Worksheet cannot be found at %'%(key))
+      df = pd.DataFrame(sh.get_all_values())
+      df.columns = df.iloc[int(headers)]
+      df = df.iloc[int(start):int(end)]
+      df = df.reset_index(drop=True)
     return df, sh
 
   def __apply_function(self, df, function_name, inputs=None, args=None, kwargs=None):
@@ -166,7 +165,7 @@ class DatasetManager:
     functions_getters[functions_location['type']](functions_location)
 
   def __get_inputs_from_sheet(self, location, sheet=0, headers=0, start=1, end=None):
-    input_locations = self.__get_df_from_drive(location)[0].to_dict('records')
+    input_locations = self.__get_df_from_drive(**location)[0].to_dict('records')
     processed_input_locations = []
     for _, row in enumerate(input_locations):
       base = {
@@ -229,7 +228,7 @@ class DatasetManager:
       df[my_dedup_column] = self.__apply_function(df, **dedup_column)
       # Check against parent dataset for duplicates
       if parent_dataset_location:
-        parent_df, parent_sheet = self.__get_df_from_drive(parent_dataset_location)
+        parent_df, parent_sheet = self.__get_df_from_drive(**parent_dataset_location)
         dedup_list = self.__apply_function(parent_df, **dedup_column).values
         df = df.loc[[(u not in dedup_list) for u in df[my_dedup_column]]].copy()
       # Drop internal duplicates
@@ -288,7 +287,7 @@ class DatasetManager:
     print('Inputs:')
     for input in input_locations:
       print('\t'+'https://docs.google.com/spreadsheets/d/'+input['key']+'/edit')
-      af = self.__get_df_from_drive(input, defaults=defaults)[0]
+      af = self.__get_df_from_drive(**input['location'])[0]
       af.columns = [self.__split_all(c, split_chars).strip().upper() for c in af.columns] 
       dfs.append(af)
     df = pd.concat(dfs)
