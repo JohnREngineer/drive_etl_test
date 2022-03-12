@@ -272,7 +272,7 @@ class DatasetManager:
     if (input_df is None) or (len(input_df) == 0) :
       return self.__get_empty_output(len(output_settings))
     outputs = []
-    for o in zip(output_settings):
+    for o in output_settings:
       df, nick_names = self.__get_output_from_columns(input_df, o['columns'])
       df, parent_sheet = self.__deduplicate_dataset(df, o.get('dedup_column'), o.get('parent_dataset'))
       print('\tNew %s:\t%s' % (o['name'], len(df)))
