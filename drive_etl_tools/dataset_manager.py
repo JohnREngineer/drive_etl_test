@@ -303,6 +303,7 @@ class DatasetManager:
   def __add_calculations(self, input_df, calculations):
     df = input_df.copy()
     error_strings = []
+    print(input_df)
     for calc in calculations:
       df[calc['name']] = self.__apply_function(df, **calc)
       if calc.get('required_values') is not None:
