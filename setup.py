@@ -6,7 +6,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name='drive_etl_tools',
-    version='3.0.0',
+    version='3.0.1',
     author='John R',
     author_email='JohnREngineer@gmail.com',
     description='Tools for doing automated ETL for sheets and files in Google Drive.',

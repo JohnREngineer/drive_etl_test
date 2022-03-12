@@ -29,6 +29,11 @@ class DatasetManager:
     path = f.metadata['title']
     f.GetContentFile(path)
     return path
+  
+  def __upload_drive_file(self, key, path):
+    f = self.drive.CreateFile({'parents': [{'kind': 'drive#fileLink', 'id': key}]})
+    f.SetContentFile(path)
+    f.Upload()
 
   def __get_df_from_columns(self, df, columns):
     names, calculations, psuedonames = list(map(list,list(zip(*columns))))
@@ -106,7 +111,9 @@ class DatasetManager:
           ef = nf.loc[[(u not in list_dedup.values) for u in nf['python_deduplicate_column']]].copy()
         ef = ef.drop_duplicates(subset='python_deduplicate_column', keep='last')
         ef = ef.drop('python_deduplicate_column', axis=1)
-      excel = export['excel']
+      excel = export.get('excel')
+      if not excel:
+        raise ValueError('Excel export template settings not found in',str(export))
       path = self.__download_drive_file(self.__sanitize_key(excel['key']))
       sheet_name = excel['sheet']
       if str(sheet_name).isdigit():
@@ -117,9 +124,14 @@ class DatasetManager:
       if len(ef) > 0:
         if reference_dataset:
           for _, row in ef.iterrows():
-              list_sheet.append_rows(values=[list(row.values)])
+            list_sheet.append_rows(values=[list(row.values)])
         out_path = self.__export_to_template(path, sheet_name, ef, nick_names)
-        print('\t\tCreated '+out_path)
+        if export.get('key'):
+            folder_key = self.__sanitize_key(export['key'])
+            self.__upload_drive_file(folder_key, out_path)
+            print('\t\tUploaded '+out_path+' to https://drive.google.com/drive/folders/'+folder_key)
+        else:
+          print('\t\tCreated '+out_path)
       outputs.append([ef, out_path])
     return list(map(list,list(zip(*outputs))))
 
