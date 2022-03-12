@@ -310,7 +310,7 @@ class DatasetManager:
 
   def __get_dataset_from_inputs(self, input_settings):
     df = None
-    input_locations = self.__get_input_locations(input_settings['location'])
+    input_locations = self.__get_input_locations(input_settings)
     if input_locations:
       df = self.__get_dataset_from_input_locations(input_locations, input_settings['defaults'])
       if len(df) > 0:
