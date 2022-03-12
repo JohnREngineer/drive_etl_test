@@ -285,9 +285,9 @@ class DatasetManager:
   def __get_dataset_from_input_locations(self, input_locations, defaults=None, split_chars = ['\n','?','(']):
     dfs = []
     print('Inputs:')
-    for input in input_locations:
-      print('\t'+'https://docs.google.com/spreadsheets/d/'+input['key']+'/edit')
-      af = self.__get_df_from_drive(**input['location'])[0]
+    for location in input_locations:
+      print('\t'+'https://docs.google.com/spreadsheets/d/'+location['key']+'/edit')
+      af = self.__get_df_from_drive(**location)[0]
       af.columns = [self.__split_all(c, split_chars).strip().upper() for c in af.columns] 
       dfs.append(af)
     df = pd.concat(dfs)
