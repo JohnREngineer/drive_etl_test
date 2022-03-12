@@ -228,6 +228,7 @@ class DatasetManager:
 
   def __deduplicate_dataset(self, input_df, dedup_column, parent_dataset_location=None):
     df = input_df.copy()
+    parent_sheet = None
     if dedup_column:
       my_dedup_column = str(uuid.uuid4()) # ensure that this column name is not overwriting an input column
       df[my_dedup_column] = self.__apply_function(df, **dedup_column)
