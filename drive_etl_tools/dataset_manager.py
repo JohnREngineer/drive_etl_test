@@ -337,13 +337,13 @@ class DatasetManager:
   def __update_dataset(self, settings):
     df = self.__get_dataset_from_inputs(settings['inputs'])
     output = self.__get_outputs_from_dataset(df, settings['outputs'])
-    transposed_output = list(map(list,list(zip(*output)))) 
     return transposed_output
 
   def run_update(self, settings_location):
     self.__update_start_time()
     run_settings = self.__get_settings(settings_location)
     output = [self.__update_dataset(s) for s in run_settings['etls']]
-    dfs, paths = [itertools.chain(*o) for o in output]
+    transposed_output = list(map(list,list(zip(*output)))) 
+    dfs, paths = [itertools.chain(*o) for o in transposed_output]
     paths = [p for p in paths if p]
     return dfs, paths
