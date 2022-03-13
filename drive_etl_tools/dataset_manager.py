@@ -1,5 +1,3 @@
-import pathlib
-from re import I
 from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
 import gspread
@@ -10,7 +8,9 @@ import uuid
 import os
 import json
 import importlib
+import pathlib
 import sys
+import itertools
 
 class DatasetManager:
   def __init__(self):
@@ -278,7 +278,7 @@ class DatasetManager:
   def __get_outputs_from_dataset(self, input_df, output_settings):
     if (input_df is None) or (len(input_df) == 0) :
       return self.__get_empty_output(len(output_settings))
-    outputs = []
+    output = []
     for o in output_settings:
       df = self.__apply_filters(input_df, o.get('filters'))
       df, nick_names = self.__get_output_from_columns(df, o['columns'])
@@ -290,8 +290,8 @@ class DatasetManager:
         self.__append_to_parent_sheet(df, parent_sheet)
         self.__export_to_excel_from_template(df, path, o.get('excel'), nick_names)
         self.__upload_file_to_folder(path, o.get('folder'))
-      outputs.append([df, path])
-    transposed_outputs = list(map(list,list(zip(*outputs)))) 
+      output.append([df, path])
+    transposed_outputs = list(map(list,list(zip(*output)))) 
     return transposed_outputs
 
   def __get_dataset_from_input_locations(self, input_locations, defaults=None, split_chars = ['\n','?','(']):
@@ -337,10 +337,12 @@ class DatasetManager:
   def __update_dataset(self, settings):
     df = self.__get_dataset_from_inputs(settings['inputs'])
     output = self.__get_outputs_from_dataset(df, settings['outputs'])
-    return output
+    transposed_output = list(map(list,list(zip(*output)))) 
+    return transposed_output
 
   def run_update(self, settings_location):
     self.__update_start_time()
     run_settings = self.__get_settings(settings_location)
     output = [self.__update_dataset(s) for s in run_settings['etls']]
-    return output
+    flattened_output = [itertools.chain(*o) for o in output]
+    return flattened_output
