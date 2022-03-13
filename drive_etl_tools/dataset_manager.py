@@ -246,6 +246,9 @@ class DatasetManager:
     template_path = self.__download_drive_file(self.__sanitize_key(template_location['key']))
     os.rename(template_path, path)
     sheet_name = template_location.get('sheet',0)
+    if str(sheet_name).isnumeric():
+        xl = pd.ExcelFile(path)
+        sheet_name = xl.sheet_names[int(sheet_name)]
     ef = pd.read_excel(path, sheet_name)
     ef.columns = df.columns
     ef = ef.append(df, ignore_index=True)
