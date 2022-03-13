@@ -242,10 +242,10 @@ class DatasetManager:
       df.drop(my_dedup_column, axis=1, inplace=True)
     return df, parent_sheet
 
-  def __export_to_excel(self, df, path, excel_location, nick_names=None):
-    template_path = self.__download_drive_file(self.__sanitize_key(excel_location['key']))
+  def __export_to_excel_from_template(self, df, path, template_location, nick_names=None):
+    template_path = self.__download_drive_file(self.__sanitize_key(template_location['key']))
     os.rename(template_path, path)
-    sheet_name = excel_location.get('sheet',0)
+    sheet_name = template_location.get('sheet',0)
     ef = pd.read_excel(path, sheet_name)
     ef.columns = df.columns
     ef = ef.append(df, ignore_index=True)
@@ -282,7 +282,7 @@ class DatasetManager:
       if len(df) > 0:
         path = 'New_%s_%s.xlsx'%(o['name'], self.start_time_unix)
         self.__append_to_parent_sheet(df, parent_sheet)
-        self.__export_to_excel(df, path, nick_names)
+        self.__export_to_excel_from_template(df, path, o.get('excel'), nick_names)
         self.__upload_file_to_folder(path, o.get('folder'))
       outputs.append([df, path])
     transposed_outputs = list(map(list,list(zip(*outputs)))) 
