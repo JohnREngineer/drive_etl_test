@@ -117,7 +117,7 @@ class DatasetManager:
     if not settings:
       raise ValueError('No settings found in folder %s' % (self.folder_string % key))
     else:
-      print('\tFound '+first['title']+' in %s' % (self.folder_string % key)
+      print('\tFound '+first['title']+' in %s' % (self.folder_string % key))
     # Get settings
     settings = self.__get_settings_from_key(first.get('key'))
     return settings
