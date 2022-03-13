@@ -344,6 +344,6 @@ class DatasetManager:
     run_settings = self.__get_settings(settings_location)
     output = [self.__update_dataset(s) for s in run_settings['etls']]
     transposed_output = list(map(list,list(zip(*output)))) 
-    dfs, paths = [itertools.chain(*o) for o in transposed_output]
+    dfs, paths = [list(itertools.chain(*o)) for o in transposed_output]
     paths = [p for p in paths if p]
     return dfs, paths
