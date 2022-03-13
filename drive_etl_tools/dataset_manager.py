@@ -255,7 +255,6 @@ class DatasetManager:
     if nick_names:
       ef.columns = nick_names
     with pd.ExcelWriter(path,  engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
-      print('%s'%(sheet_name))
       ef.to_excel(writer, sheet_name, index=False)
     print('\t\tCreated %s'%(path))
 
@@ -265,7 +264,7 @@ class DatasetManager:
       f = self.drive.CreateFile({'parents': [{'kind': 'drive#fileLink', 'id': sanitized_key}]})
       f.SetContentFile(path)
       f.Upload()
-      print('\t\tUploaded %s to https://drive.google.com/drive/folders/%s',(path, sanitized_key))
+      print('\t\tUploaded %s to https://drive.google.com/drive/folders/%s'%(path, sanitized_key))
 
   def __append_to_parent_sheet(self, df, parent_sheet=None):
     if parent_sheet:
