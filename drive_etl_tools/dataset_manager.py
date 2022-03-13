@@ -344,5 +344,6 @@ class DatasetManager:
     self.__update_start_time()
     run_settings = self.__get_settings(settings_location)
     output = [self.__update_dataset(s) for s in run_settings['etls']]
-    flattened_output = [itertools.chain(*o) for o in output]
-    return flattened_output
+    dfs, paths = [itertools.chain(*o) for o in output]
+    paths = [p for p in paths if p]
+    return dfs, paths
