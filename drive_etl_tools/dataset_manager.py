@@ -337,7 +337,7 @@ class DatasetManager:
   def __update_dataset(self, settings):
     df = self.__get_dataset_from_inputs(settings['inputs'])
     output = self.__get_outputs_from_dataset(df, settings['outputs'])
-    return transposed_output
+    return output
 
   def run_update(self, settings_location):
     self.__update_start_time()
