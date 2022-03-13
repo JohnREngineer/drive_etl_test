@@ -274,10 +274,10 @@ class DatasetManager:
       return self.__get_empty_output(len(output_settings))
     outputs = []
     for o in output_settings:
-      df, nick_names = self.__get_output_from_columns(input_df, o['columns'])
+      df = self.__apply_filters(input_df, o.get('filters'))
+      df, nick_names = self.__get_output_from_columns(df, o['columns'])
       df, parent_sheet = self.__deduplicate_dataset(df, o.get('dedup_column'), o.get('parent_dataset'))
       print('\tNew %s:\t%s' % (o['name'], len(df)))
-      df = self.__apply_filters(df, o.get('filters'))
       path = None
       if len(df) > 0:
         path = 'New_%s_%s.xlsx'%(o['name'], self.start_time_unix)
