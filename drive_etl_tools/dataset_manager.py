@@ -14,9 +14,12 @@ import sys
 
 class DatasetManager:
   def __init__(self):
+    self.__update_credentials()
     self.start_time_unix = ''
     self.etl_functions = {}
-    self.__update_credentials()
+    self.folder_string = 'https://drive.google.com/drive/folders/%s'
+    self.file_string = 'https://drive.google.com/file/d/%s/edit'
+    self.sheet_string = 'https://docs.google.com/spreadsheets/d/%s/edit'
 
   def __update_credentials(self):
     self.google_credentials = GoogleCredentials.get_application_default()
@@ -97,7 +100,7 @@ class DatasetManager:
     key = self.__sanitize_key(key)
     path = self.__download_drive_file(key)
     settings = self.__load_json(path)
-    print('\tLoaded settings from https://drive.google.com/file/d/'+key+'/edit')
+    print('\tLoaded settings from %s' % (self.file_string % key))
     return settings
 
   def __get_settings_from_folder(self, key):
@@ -112,9 +115,9 @@ class DatasetManager:
     first = sorted(settings, key=lambda x: x.get('date'), reverse=True)[0]
     # Report findings
     if not settings:
-      raise ValueError('No settings found in folder https://drive.google.com/drive/folders/%s'%(key))
+      raise ValueError('No settings found in folder %s' % (self.folder_string % key))
     else:
-      print('\tFound '+first['title']+' in https://drive.google.com/drive/folders/'+key)
+      print('\tFound '+first['title']+' in %s' % (self.folder_string % key)
     # Get settings
     settings = self.__get_settings_from_key(first.get('key'))
     return settings
@@ -140,7 +143,7 @@ class DatasetManager:
 
   def __update_functions_from_key(self, key):
     key = self.__sanitize_key(key)
-    print('\tLoading https://drive.google.com/file/d/'+key+'/edit')
+    print('\tLoading %s' % (self.file_string % key))
     path = self.__download_drive_file(key)
     functions = self.__import_module_from_path(path)
     self.etl_functions = functions.get_etl_functions()
@@ -155,7 +158,7 @@ class DatasetManager:
     if not functions:
       return None
     first = sorted(functions, key=lambda x: x.get('date'), reverse=True)[0]
-    print('\tFound '+first['title']+' in https://drive.google.com/drive/folders/'+key)
+    print('\tFound %s in %s' % (first['title'], self.folder_string % key))
     functions = self.__update_functions_from_key(first.get('key'))
     return functions
 
@@ -204,8 +207,8 @@ class DatasetManager:
     }
     inputs_prints = {
         'list': lambda i:'Inputs passed directly.',
-        'sheet': lambda i:'Inputs from sheet: https://docs.google.com/spreadsheets/d/%s/edit' % (self.__sanitize_key(i['location']['key'])),
-        'folder': lambda i:'Inputs from folder: https://drive.google.com/drive/folders/%s' % (self.__sanitize_key(i['location']['key'])),
+        'sheet': lambda i:'Inputs from sheet: %s' % (self.sheet_string % self.__sanitize_key(i['location']['key'])),
+        'folder': lambda i:'Inputs from folder: %s' % (self.folder_string % self.__sanitize_key(i['location']['key'])),
     }
     result = inputs_getters[inputs['type']](inputs)
     print(inputs_prints[inputs['type']](inputs))
@@ -264,7 +267,7 @@ class DatasetManager:
       f = self.drive.CreateFile({'parents': [{'kind': 'drive#fileLink', 'id': sanitized_key}]})
       f.SetContentFile(path)
       f.Upload()
-      print('\t\tUploaded %s to https://drive.google.com/drive/folders/%s'%(path, sanitized_key))
+      print('\t\tUploaded %s to %s'%(path, self.folder_string % sanitized_key))
 
   def __append_to_parent_sheet(self, df, parent_sheet=None):
     if parent_sheet:
