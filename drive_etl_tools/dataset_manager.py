@@ -252,6 +252,7 @@ class DatasetManager:
     if nick_names:
       ef.columns = nick_names
     with pd.ExcelWriter(path,  engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
+      print('%s'%(sheet_name))
       ef.to_excel(writer, sheet_name, index=False)
     print('\t\tCreated %s'%(path))
 
