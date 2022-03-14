@@ -276,7 +276,7 @@ class DatasetManager:
         parent_sheet.append_rows(values=[list(row.values)])
       print('Appended new data to parent dataset.')
 
-  def __get_outputs_from_dataset(self, input_df, output_settings, upload=True):
+  def __get_outputs_from_dataframe(self, input_df, output_settings, upload=True):
     if (input_df is None) or (len(input_df) == 0) :
       return self.__get_empty_output(len(output_settings))
     output = []
@@ -323,7 +323,7 @@ class DatasetManager:
       raise ValueError('\n'.join(error_strings))
     return df
 
-  def __get_dataset_from_inputs(self, input_settings):
+  def __get_dataframe_from_inputs(self, input_settings):
     df = None
     input_locations = self.__get_input_locations(input_settings)
     if input_locations:
@@ -335,8 +335,8 @@ class DatasetManager:
     return df
 
   def __update_dataset(self, settings):
-    df = self.__get_dataset_from_inputs(settings['inputs'])
-    output = self.__get_outputs_from_dataset(df, settings['outputs'], upload=False)
+    df = self.__get_dataframe_from_inputs(settings['inputs'])
+    output = self.__get_outputs_from_dataframe(df, settings['outputs'], upload=False)
     result = {
       settings['name']: {
         'dataframe': df,
@@ -360,7 +360,7 @@ class DatasetManager:
   def __create_dataset_from_meta_calculations(self, previous_results, inputs):
     dfs = {}
     for input_settings in inputs:
-      previous_df = previous_results.get(input_settings['dataframe'])
+      previous_df = previous_results.get(input_settings['dataframe']).get('dataframe')
       df = self.__add_calculations(previous_df, input_settings['calculations'])
       dfs.update({input_settings['name']:df})
     return dfs
