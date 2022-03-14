@@ -79,6 +79,8 @@ class DatasetManager:
     if isinstance(input_columns, list):
       apply_kwargs['axis'] = 1
     # Apply function to dataframe with input, args, and kwargs
+    if not isinstance(input_columns, list) and (input_columns not in df.columns.values()):
+      print(df.columns.values())
     new_column = df[input_columns].apply(apply_function, **apply_kwargs)
     if get_df:
       df_new = df.copy()
