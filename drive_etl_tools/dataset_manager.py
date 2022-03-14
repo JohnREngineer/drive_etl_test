@@ -429,7 +429,7 @@ class DatasetManager:
     if sheet_dataframes_dict:
       self.__upload_file_to_folder(path, sheet_output_settings.get('folder'))
     file_dict = {sheet_output_settings['name']: sheet_dataframes_dict}
-    return [, path]
+    return [file_dict, path]
 
   def __get_outputs_dict_from_meta_dataframe_dict(self, dataframes, file_output_settings_list):
     outputs_dict = {}
