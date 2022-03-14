@@ -379,12 +379,54 @@ class DatasetManager:
       result = { dataset_settings['name']: df}
       dataframe_dict.update(result)
     return dataframe_dict
+  """
+  
+    template_path = self.__download_drive_file(self.__sanitize_key(template_location['key']))
+    os.rename(template_path, path)
+    sheet_name = template_location.get('sheet',0)
+    if str(sheet_name).isnumeric():
+        xl = pd.ExcelFile(path)
+        sheet_name = xl.sheet_names[int(sheet_name)]
+    ef = pd.read_excel(path, sheet_name)
+    ef.columns = df.columns
+    ef = ef.append(df, ignore_index=True)
+    if nick_names:
+      ef.columns = nick_names
+    with pd.ExcelWriter(path,  engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
+      ef.to_excel(writer, sheet_name, index=False)
+  """
+  def __get_output_from_meta_dataframe(self, input_df, file_output_settings, upload=True):
+    path = 'New_%s_%s.xlsx'%(sheet_output_settings['name'], self.start_time_unix)
+    template_location = file_output_settings['excel']
+    template_path = self.__download_drive_file(self.__sanitize_key(template_location['key']))
+    os.rename(template_path, path)
+    any_change = False
+    for sheet_output_settings in file_output_settings['sheets']:
+      df = self.__apply_filters(input_df, sheet_output_settings.get('filters'))
+      df, nick_names = self.__get_output_from_columns(df, sheet_output_settings['columns'])
+      df, parent_sheet = self.__deduplicate_dataset(df, sheet_output_settings.get('dedup_column'), sheet_output_settings.get('parent_dataset'))
+      print('\tNew %s:\t%s' % (sheet_output_settings['name'], len(df)))
+      if (len(df) > 0):
+        any_change = True
+        if upload:
+          self.__append_to_parent_sheet(df, parent_sheet)
+        sheet_name = sheet_output_settings.get('name',0)
+        if str(sheet_name).isnumeric():
+            xl = pd.ExcelFile(path)
+            sheet_name = xl.sheet_names[int(sheet_name)]
+        if nick_names:
+          df.columns = nick_names
+        with pd.ExcelWriter(path,  engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
+          df.to_excel(writer, sheet_name, index=False)
+    if any_change and upload:
+      self.__upload_file_to_folder(path, sheet_output_settings.get('folder'))
+    return [df, path]
 
   def __get_outputs_dict_from_meta_dataframe_dict(self, dataframes, output_settings_list):
     outputs_dict = {}
     for output_settings in output_settings_list:
       input_df = dataframes.get(output_settings['dataframe'])
-      df, path = self.__get_output_from_dataframe(input_df, output_settings, upload=True)
+      df, path = self.__get_output_from_meta_dataframe(input_df, output_settings, upload=True)
       output = {
         output_settings['name']: {
           'dataframe': df,
