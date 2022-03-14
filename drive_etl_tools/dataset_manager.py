@@ -276,24 +276,24 @@ class DatasetManager:
         parent_sheet.append_rows(values=[list(row.values)])
       print('Appended new data to parent dataset.')
     
-  def __get_output_from_dataframe(self, input_df, output_settings, export=True):
+  def __get_output_from_dataframe(self, input_df, output_settings, upload=True):
     df = self.__apply_filters(input_df, output_settings.get('filters'))
     df, nick_names = self.__get_output_from_columns(df, output_settings['columns'])
     df, parent_sheet = self.__deduplicate_dataset(df, output_settings.get('dedup_column'), output_settings.get('parent_dataset'))
     print('\tNew %s:\t%s' % (output_settings['name'], len(df)))
     path = None
-    if (len(df) > 0) and export:
+    if (len(df) > 0) and upload:
       path = 'New_%s_%s.xlsx'%(output_settings['name'], self.start_time_unix)
       self.__append_to_parent_sheet(df, parent_sheet)
       self.__export_to_excel_from_template(df, path, output_settings.get('excel'), nick_names)
       self.__upload_file_to_folder(path, output_settings.get('folder'))
     return [df, path]
 
-  def __get_outputs_from_dataframe(self, input_df, output_settings_list, export=True):
+  def __get_outputs_from_dataframe(self, input_df, output_settings_list, upload=True):
     if (input_df is None) or (len(input_df) == 0) :
       return self.__get_empty_output(len(output_settings_list))
-    outputs = [self.__get_output_from_dataframe(input_df, output_settings, export) for output_settings in output_settings_list]
-    transposed_outputs = list(map(list,list(zip(*outputs)))) 
+    outputs = [self.__get_output_from_dataframe(input_df, output_settings, upload) for output_settings in output_settings_list]
+    transposed_outputs = list(map(list,list(zip(*outputs))))
     return transposed_outputs
 
   def __get_dataset_from_input_locations(self, input_locations, defaults=None, split_chars = ['\n','?','(']):
@@ -337,11 +337,11 @@ class DatasetManager:
 
   def __run_etls(self, settings):
     df = self.__get_dataframe_from_inputs(settings['inputs'])
-    output = self.__get_outputs_from_dataframe(df, settings['outputs'], export=False)
+    outputs = self.__get_outputs_from_dataframe(df, settings['outputs'], upload=False)
     result = {
       settings['name']: {
         'dataframe': df,
-        'output': output,
+        'outputs': outputs,
       }
     }
     return result
@@ -378,25 +378,24 @@ class DatasetManager:
       dataframe_dict.update(result)
     return dataframe_dict
 
-  def __get_outputs_from_meta_dataframe_dict(self, dataframes, output_settings_list):
-    outputs = []
+  def __get_outputs_dict_from_meta_dataframe_dict(self, dataframes, output_settings_list):
+    outputs_dict = {}
     for output_settings in output_settings_list:
-      df = dataframes.get(output_settings['dataframe'])
-      output = self.__get_output_from_dataframe(df, output_settings, export=True)
-    outputs.append(output)
-    transposed_outputs = list(map(list,list(zip(*outputs)))) 
-    return transposed_outputs
+      input_df = dataframes.get(output_settings['dataframe'])
+      df, path = self.__get_output_from_dataframe(input_df, output_settings, upload=True)
+      output = {
+        output_settings['name']: {
+          'dataframe': df,
+          'path': path,
+        }
+      }
+      outputs_dict.update(output)
+    return outputs_dict
 
   def __run_meta_etls(self, previous_results, etl_settings):
     dataframe_dict = self.__get_dataframe_dict_from_meta_inputs(previous_results, etl_settings['inputs'])
-    outputs = self.__get_outputs_from_meta_dataframe_dict(dataframe_dict, etl_settings['outputs'])
-    result = {
-      etl_settings['name']: {
-        'dataframe_dict': dataframe_dict,
-        'output': outputs,
-      }
-    }
-    return result
+    outputs_dict = self.__get_outputs_dict_from_meta_dataframe_dict(dataframe_dict, etl_settings['outputs'])
+    return outputs_dict
 
   def run_ETLs(self, etl_settings_location):
     etl_settings = self.__get_etl_settings_from_location(etl_settings_location)
@@ -405,8 +404,8 @@ class DatasetManager:
     results = {}
     for r in results_list:
       results.update(r)
-    meta_results_list = [self.__run_meta_etls(results, s) for s in etl_settings['meta_etls']]
-    return meta_results_list
+    meta_outputs_dict = [self.__run_meta_etls(results, s) for s in etl_settings['meta_etls']]
+    return meta_outputs_dict
     transposed_output = list(map(list,list(zip(*results)))) 
     dfs, paths = [list(itertools.chain(*o)) for o in transposed_output]
     paths = [p for p in paths if p]
