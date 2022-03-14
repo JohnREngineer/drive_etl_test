@@ -357,16 +357,16 @@ class DatasetManager:
       }
     }
   """
-  def __create_df_from_meta_calculations(self, input_settings, previous_results):
+  def __create_df_from_meta_calculations(self, previous_results, input_settings):
     previous_df = previous_results.get(input_settings['dataframe'])
     df = self.__add_calculations(previous_df, input_settings['calculations'])
     return df
 
-  def __get_datasets_from_meta_inputs(self, meta_input_settings, previous_results):
+  def __get_datasets_from_meta_inputs(self, previous_results, meta_input_settings):
     datasets = {}
     self.__update_functions(meta_input_settings['functions'])
     for dataset in meta_input_settings['datasets']:
-      df = self.__create_df_from_meta_calculations(dataset['inputs'], previous_results)
+      df = self.__create_df_from_meta_calculations(previous_results, dataset['inputs'],)
       dataset.update({meta_input_settings['name']:df})
     return datasets
 
@@ -375,7 +375,7 @@ class DatasetManager:
     return meta_outputs
 
   def __update_meta_datasets(self, previous_results, settings):
-    datasets = self.__get_datasets_from_meta_inputs(previous_results, settings['inputs'])
+    datasets = [for self.__get_datasets_from_meta_inputs(previous_results, settings['inputs'])
     outputs = self.__get_meta_outputs_from_datasets(datasets, settings['outputs'])
     return outputs
 
