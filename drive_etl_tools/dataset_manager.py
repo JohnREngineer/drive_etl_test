@@ -275,7 +275,7 @@ class DatasetManager:
         parent_sheet.append_rows(values=[list(row.values)])
       print('Appended new data to parent dataset.')
 
-  def __get_outputs_from_dataset(self, input_df, output_settings):
+  def __get_outputs_from_dataset(self, input_df, output_settings, upload=True):
     if (input_df is None) or (len(input_df) == 0) :
       return self.__get_empty_output(len(output_settings))
     output = []
@@ -289,7 +289,7 @@ class DatasetManager:
         path = 'New_%s_%s.xlsx'%(o['name'], self.start_time_unix)
         self.__append_to_parent_sheet(df, parent_sheet)
         self.__export_to_excel_from_template(df, path, o.get('excel'), nick_names)
-        self.__upload_file_to_folder(path, o.get('folder'))
+        if upload: elf.__upload_file_to_folder(path, o.get('folder'))
       output.append([df, path])
     transposed_outputs = list(map(list,list(zip(*output)))) 
     return transposed_outputs
@@ -336,7 +336,7 @@ class DatasetManager:
 
   def __update_dataset(self, settings):
     df = self.__get_dataset_from_inputs(settings['inputs'])
-    output = self.__get_outputs_from_dataset(df, settings['outputs'])
+    output = self.__get_outputs_from_dataset(df, settings['outputs'], upload=False)
     result = {
       settings['name']: {
         'dataframe': df,
