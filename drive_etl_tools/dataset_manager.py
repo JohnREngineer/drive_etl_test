@@ -384,13 +384,14 @@ class DatasetManager:
 
   def __get_outputs_from_meta_datasets(self, datasets, outputs):
     for output_settings in outputs:
+      df = datasets.get(output_settings['dataframe'])
       output = self.__get_outputs_from_dataframe(df, output_settings, export=False)
     meta_outputs = datasets
     return meta_outputs
 
   def __update_meta_datasets(self, previous_results, settings):
     datasets = self.__get_datasets_from_meta_inputs(previous_results, settings['inputs'])
-    outputs = self.__get_meta_outputs_from_datasets(datasets, settings['outputs'])
+    outputs = self.__get_outputs_from_meta_datasets(datasets, settings['outputs'])
     return outputs
 
   def run_update(self, settings_location):
