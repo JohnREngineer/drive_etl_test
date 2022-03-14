@@ -381,7 +381,7 @@ class DatasetManager:
   def __get_outputs_from_meta_dataframe_dict(self, dataframes, output_settings_list):
     outputs = []
     for output_settings in output_settings_list:
-      df = dataframes.get(output_settings_list['dataframe'])
+      df = dataframes.get(output_settings['dataframe'])
       output = self.__get_output_from_dataframe(df, output_settings, export=True)
     outputs.append(output)
     transposed_outputs = list(map(list,list(zip(*outputs)))) 
