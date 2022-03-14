@@ -14,12 +14,13 @@ import itertools
 
 class DatasetManager:
   def __init__(self):
-    self.__update_credentials()
     self.start_time_unix = ''
     self.etl_functions = {}
     self.folder_string = 'https://drive.google.com/drive/folders/%s'
     self.file_string = 'https://drive.google.com/file/d/%s/edit'
     self.sheet_string = 'https://docs.google.com/spreadsheets/d/%s/edit'
+    self.__update_start_time()
+    self.__update_credentials()
 
   def __update_credentials(self):
     self.google_credentials = GoogleCredentials.get_application_default()
@@ -328,7 +329,6 @@ class DatasetManager:
     if input_locations:
       df = self.__get_dataset_from_input_locations(input_locations, input_settings['defaults'])
       if len(df) > 0:
-        self.__update_functions(input_settings['functions'])
         df = self.__add_calculations(df, input_settings['calculations'])
       else: print('\nAll input files are empty.')
     else: print('No input files found.')
@@ -392,8 +392,8 @@ class DatasetManager:
     return outputs
 
   def run_update(self, settings_location):
-    self.__update_start_time()
     etl_settings = self.__get_settings(settings_location)
+    self.__update_functions(etl_settings['functions'])
     results_list = [self.__update_dataset(s) for s in etl_settings['etls']]
     results = {}
     for r in results_list:
