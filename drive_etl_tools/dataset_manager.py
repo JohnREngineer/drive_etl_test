@@ -94,7 +94,7 @@ class DatasetManager:
     for s in split_chars:
       out_string = out_string.split(s)[0]
     for r in replace_chars:
-      out_string.replace(r,'')
+      out_string = out_string.replace(r,'')
     return out_string
 
   def __load_json(self, path):
