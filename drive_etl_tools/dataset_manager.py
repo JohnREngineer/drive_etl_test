@@ -386,7 +386,7 @@ class DatasetManager:
     results = {}
     for r in results_list:
       results.update(r)
-    meta_results = [self.__update_meta_datasets(s, results) for s in etl_settings['meta_etls']]
+    meta_results = [self.__update_meta_datasets(results, s) for s in etl_settings['meta_etls']]
     return meta_results
     transposed_output = list(map(list,list(zip(*results)))) 
     dfs, paths = [list(itertools.chain(*o)) for o in transposed_output]
