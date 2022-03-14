@@ -365,7 +365,7 @@ class DatasetManager:
       dataset.update({input_settings['dataframe']: df})
     return dataset
 
-  def __get_dataframes_from_meta_datasets(self, meta_datasets, output):
+  def __get_dataframe_from_meta_datasets(self, meta_datasets, output):
     return meta_datasets[output['dataframe']]
 
   def __get_datasets_from_meta_inputs(self, previous_results, meta_input_settings):
