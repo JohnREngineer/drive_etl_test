@@ -370,16 +370,16 @@ class DatasetManager:
 
   def __get_datasets_from_meta_inputs(self, previous_results, meta_input_settings):
     datasets = {}
-    for dataset in meta_input_settings['datasets']:
-      new_dataset = self.__create_dataset_from_meta_calculations(previous_results, dataset['inputs'])
-      df = self.__get_dataframe_from_meta_datasets(new_dataset, dataset['output'])
+    for dataset_settings in meta_input_settings['datasets']:
+      new_dataset = self.__create_dataset_from_meta_calculations(previous_results, dataset_settings['inputs'])
+      df = self.__get_dataframe_from_meta_datasets(new_dataset, dataset_settings['output'])
       result = {
-        meta_input_settings['name']:{
+        dataset_settings['name']:{
           'datasets': df,
           # 'output': output,
         }
       }
-      dataset.update()
+      datasets.update()
     return datasets
 
   def __get_meta_outputs_from_datasets(self, datasets, output_settings):
