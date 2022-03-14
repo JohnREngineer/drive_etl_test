@@ -1,3 +1,4 @@
+from this import d
 from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
 import gspread
@@ -37,11 +38,11 @@ class DatasetManager:
     return path
   
   def __get_output_from_columns(self, df, columns):
-    names, calculations, psuedonames = list(map(list,list(zip(*columns))))
-    psuedonames = [p or n for n,p in zip(names,psuedonames)]
+    names, calculations, nick_names = list(map(list,list(zip(*columns))))
+    nick_names = [p or n for n,p in zip(names,nick_names)]
     nf = df[calculations].copy()
     nf.columns = list(names)
-    return nf, psuedonames
+    return nf, nick_names
 
   def __sanitize_key(self, key):
     new_key = key
@@ -267,7 +268,7 @@ class DatasetManager:
     print('\t\tCreated %s'%(path))
 
   def __upload_file_to_folder(self, path, folder=None):
-    if folder.get('key'):
+    if folder.get('key') and self.upload:
       sanitized_key = self.__sanitize_key(folder['key'])
       f = self.drive.CreateFile({'parents': [{'kind': 'drive#fileLink', 'id': sanitized_key}]})
       f.SetContentFile(path)
@@ -275,28 +276,28 @@ class DatasetManager:
       print('\t\tUploaded %s to %s'%(path, self.folder_string % sanitized_key))
 
   def __append_to_parent_sheet(self, df, parent_sheet=None):
-    if parent_sheet:
+    if parent_sheet and self.upload:
       for _, row in df.iterrows():
         parent_sheet.append_rows(values=[list(row.values)])
       print('Appended new data to parent dataset.')
     
-  def __get_output_from_dataframe(self, input_df, output_settings, upload=True):
+  def __get_output_from_dataframe(self, input_df, output_settings):
     df = self.__apply_filters(input_df, output_settings.get('filters'))
     df, nick_names = self.__get_output_from_columns(df, output_settings['columns'])
     df, parent_sheet = self.__deduplicate_dataset(df, output_settings.get('dedup_column'), output_settings.get('parent_dataset'))
     print('\tNew %s:\t%s' % (output_settings['name'], len(df)))
     path = None
-    if (len(df) > 0) and upload:
+    if (len(df) > 0):
       path = 'New_%s_%s.xlsx'%(output_settings['name'], self.start_time_unix)
       self.__append_to_parent_sheet(df, parent_sheet)
       self.__export_to_excel_from_template(df, path, output_settings.get('excel'), nick_names)
       self.__upload_file_to_folder(path, output_settings.get('folder'))
     return [df, path]
 
-  def __get_outputs_from_dataframe(self, input_df, output_settings_list, upload=True):
+  def __get_outputs_from_dataframe(self, input_df, output_settings_list):
     if (input_df is None) or (len(input_df) == 0) :
       return self.__get_empty_output(len(output_settings_list))
-    outputs = [self.__get_output_from_dataframe(input_df, output_settings, upload) for output_settings in output_settings_list]
+    outputs = [self.__get_output_from_dataframe(input_df, output_settings) for output_settings in output_settings_list]
     transposed_outputs = list(map(list,list(zip(*outputs))))
     return transposed_outputs
 
@@ -341,7 +342,7 @@ class DatasetManager:
 
   def __run_etls(self, settings):
     df = self.__get_dataframe_from_inputs(settings['inputs'])
-    outputs = self.__get_outputs_from_dataframe(df, settings['outputs'], upload=False)
+    outputs = self.__get_outputs_from_dataframe(df, settings['outputs'])
     result = {
       settings['name']: {
         'dataframe': df,
@@ -397,40 +398,45 @@ class DatasetManager:
     with pd.ExcelWriter(path,  engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
       ef.to_excel(writer, sheet_name, index=False)
   """
-  def __get_output_from_meta_dataframe(self, input_df, file_output_settings, upload=True):
+
+  def __get_sheet_output_from_meta_dataframe(self, input_df, path, sheet_output_settings):
+    df = self.__apply_filters(input_df, sheet_output_settings.get('filters'))
+    df, nick_names = self.__get_output_from_columns(df, sheet_output_settings['columns'])
+    df, parent_sheet = self.__deduplicate_dataset(df, sheet_output_settings.get('dedup_column'), sheet_output_settings.get('parent_dataset'))
+    print('\tNew %s:\t%s' % (sheet_output_settings['name'], len(df)))
+    if (len(df) == 0):
+      return {}
+    df.columns = nick_names
+    self.__append_to_parent_sheet(df, parent_sheet)
+    sheet_name = sheet_output_settings.get('name',0)
+    if str(sheet_name).isnumeric():
+        xl = pd.ExcelFile(path)
+        sheet_name = xl.sheet_names[int(sheet_name)]
+    with pd.ExcelWriter(path,  engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
+      df.to_excel(writer, sheet_name, index=False)
+    return {sheet_output_settings['name']: df}    
+
+  def __get_file_output_from_meta_dataframe(self, dataframes, file_output_settings):
+    input_df = dataframes.get(file_output_settings['dataframe'])
     path = 'New_%s_%s.xlsx'%(sheet_output_settings['name'], self.start_time_unix)
     template_location = file_output_settings['excel']
     template_path = self.__download_drive_file(self.__sanitize_key(template_location['key']))
     os.rename(template_path, path)
-    any_change = False
+    sheet_dataframes_dict = {}
     for sheet_output_settings in file_output_settings['sheets']:
-      df = self.__apply_filters(input_df, sheet_output_settings.get('filters'))
-      df, nick_names = self.__get_output_from_columns(df, sheet_output_settings['columns'])
-      df, parent_sheet = self.__deduplicate_dataset(df, sheet_output_settings.get('dedup_column'), sheet_output_settings.get('parent_dataset'))
-      print('\tNew %s:\t%s' % (sheet_output_settings['name'], len(df)))
-      if (len(df) > 0):
-        any_change = True
-        if upload:
-          self.__append_to_parent_sheet(df, parent_sheet)
-        sheet_name = sheet_output_settings.get('name',0)
-        if str(sheet_name).isnumeric():
-            xl = pd.ExcelFile(path)
-            sheet_name = xl.sheet_names[int(sheet_name)]
-        if nick_names:
-          df.columns = nick_names
-        with pd.ExcelWriter(path,  engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
-          df.to_excel(writer, sheet_name, index=False)
-    if any_change and upload:
+      df_dict = self.__get_sheet_output_from_meta_dataframe(input_df, path, sheet_output_settings)
+      sheet_dataframes_dict.update(df_dict)
+    if sheet_dataframes_dict:
       self.__upload_file_to_folder(path, sheet_output_settings.get('folder'))
-    return [df, path]
+    file_dict = {sheet_output_settings['name']: sheet_dataframes_dict}
+    return [, path]
 
-  def __get_outputs_dict_from_meta_dataframe_dict(self, dataframes, output_settings_list):
+  def __get_outputs_dict_from_meta_dataframe_dict(self, dataframes, file_output_settings_list):
     outputs_dict = {}
-    for output_settings in output_settings_list:
-      input_df = dataframes.get(output_settings['dataframe'])
-      df, path = self.__get_output_from_meta_dataframe(input_df, output_settings, upload=True)
+    for file_output_settings in file_output_settings_list:
+      df, path = self.__get_file_output_from_meta_dataframe(dataframes, file_output_settings)
       output = {
-        output_settings['name']: {
+        file_output_settings['name']: {
           'dataframe': df,
           'path': path,
         }
