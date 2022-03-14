@@ -377,9 +377,9 @@ class DatasetManager:
       dataframes.update(result)
     return dataframes
 
-  def __get_outputs_from_meta_dataframes(self, dataframes, outputs):
+  def __get_outputs_from_meta_dataframes(self, dataframes, output_settings_list):
     outputs = []
-    for output_settings in outputs:
+    for output_settings in output_settings_list:
       df = dataframes.get(output_settings['dataframe'])
       output = self.__get_outputs_from_dataframe(df, output_settings, export=True)
       outputs.append(output)
