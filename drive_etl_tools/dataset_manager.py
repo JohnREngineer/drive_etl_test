@@ -368,30 +368,26 @@ class DatasetManager:
   def __get_dataframe_from_meta_dataset(self, meta_datasets, output):
     return meta_datasets[output['dataframe']]
 
-  def __get_datasets_from_meta_inputs(self, previous_results, meta_input_settings):
-    datasets = {}
+  def __get_dataframes_from_meta_inputs(self, previous_results, meta_input_settings):
+    dataframes = {}
     for dataset_settings in meta_input_settings:
       dataset = self.__create_dataset_from_meta_calculations(previous_results, dataset_settings['inputs'])
       df = self.__get_dataframe_from_meta_dataset(dataset, dataset_settings['output'])
-      result = {
-        dataset_settings['name']:{
-          'dataset': dataset,
-          'dataframe': df
-        }
-      }
-      datasets.update(result)
-    return datasets
+      result = { dataset_settings['name']: df}
+      dataframes.update(result)
+    return dataframes
 
-  def __get_outputs_from_meta_datasets(self, datasets, outputs):
+  def __get_outputs_from_meta_dataframes(self, dataframes, outputs):
+    outputs = []
     for output_settings in outputs:
-      df = datasets.get(output_settings['dataframe'])
-      output = self.__get_outputs_from_dataframe(df, output_settings, export=False)
-    meta_outputs = datasets
-    return meta_outputs
+      df = dataframes.get(output_settings['dataframe'])
+      output = self.__get_outputs_from_dataframe(df, output_settings, export=True)
+      outputs.append(output)
+    return outputs
 
   def __update_meta_datasets(self, previous_results, settings):
-    datasets = self.__get_datasets_from_meta_inputs(previous_results, settings['inputs'])
-    outputs = self.__get_outputs_from_meta_datasets(datasets, settings['outputs'])
+    dataframes = self.__get_dataframes_from_meta_inputs(previous_results, settings['inputs'])
+    outputs = self.__get_outputs_from_meta_dataframes(dataframes, settings['outputs'])
     return outputs
 
   def run_update(self, settings_location):
