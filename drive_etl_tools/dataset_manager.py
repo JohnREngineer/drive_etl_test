@@ -290,7 +290,7 @@ class DatasetManager:
         path = 'New_%s_%s.xlsx'%(o['name'], self.start_time_unix)
         self.__append_to_parent_sheet(df, parent_sheet)
         self.__export_to_excel_from_template(df, path, o.get('excel'), nick_names)
-        elf.__upload_file_to_folder(path, o.get('folder'))
+        self.__upload_file_to_folder(path, o.get('folder'))
       output.append([df, path])
     transposed_outputs = list(map(list,list(zip(*output)))) 
     return transposed_outputs
