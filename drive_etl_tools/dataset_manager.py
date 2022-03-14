@@ -87,10 +87,12 @@ class DatasetManager:
     else:
       return new_column
 
-  def __split_all(self, string, split_chars):
+  def __split_and_replace(self, string, split_chars = ['\n','?','('], replace_chars=[',']):
     out_string = string
     for s in split_chars:
       out_string = out_string.split(s)[0]
+    for r in replace_chars:
+      out_string.replace(r,'')
     return out_string
 
   def __load_json(self, path):
@@ -296,7 +298,7 @@ class DatasetManager:
     transposed_outputs = list(map(list,list(zip(*outputs))))
     return transposed_outputs
 
-  def __get_dataset_from_input_locations(self, input_locations, defaults=None, split_chars = ['\n','?','(']):
+  def __get_dataset_from_input_locations(self, input_locations, defaults=None):
     dfs = []
     print('Inputs:')
     for location in input_locations:
@@ -304,7 +306,7 @@ class DatasetManager:
       full_location = defaults.copy()
       full_location.update(location)
       af = self.__get_df_from_drive(**full_location)[0]
-      af.columns = [self.__split_all(c, split_chars).strip().upper() for c in af.columns] 
+      af.columns = [self.__split_and_replace(c).strip().upper() for c in af.columns] 
       dfs.append(af)
     df = pd.concat(dfs)
     return df
