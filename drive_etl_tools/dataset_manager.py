@@ -276,7 +276,7 @@ class DatasetManager:
         parent_sheet.append_rows(values=[list(row.values)])
       print('Appended new data to parent dataset.')
 
-  def __get_outputs_from_dataframe(self, input_df, output_settings, upload=True):
+  def __get_outputs_from_dataframe(self, input_df, output_settings, export=True):
     if (input_df is None) or (len(input_df) == 0) :
       return self.__get_empty_output(len(output_settings))
     output = []
@@ -286,11 +286,11 @@ class DatasetManager:
       df, parent_sheet = self.__deduplicate_dataset(df, o.get('dedup_column'), o.get('parent_dataset'))
       print('\tNew %s:\t%s' % (o['name'], len(df)))
       path = None
-      if len(df) > 0:
+      if (len(df) > 0) and export:
         path = 'New_%s_%s.xlsx'%(o['name'], self.start_time_unix)
         self.__append_to_parent_sheet(df, parent_sheet)
         self.__export_to_excel_from_template(df, path, o.get('excel'), nick_names)
-        if upload: elf.__upload_file_to_folder(path, o.get('folder'))
+        elf.__upload_file_to_folder(path, o.get('folder'))
       output.append([df, path])
     transposed_outputs = list(map(list,list(zip(*output)))) 
     return transposed_outputs
@@ -336,7 +336,7 @@ class DatasetManager:
 
   def __update_dataset(self, settings):
     df = self.__get_dataframe_from_inputs(settings['inputs'])
-    output = self.__get_outputs_from_dataframe(df, settings['outputs'], upload=False)
+    output = self.__get_outputs_from_dataframe(df, settings['outputs'], export=False)
     result = {
       settings['name']: {
         'dataframe': df,
@@ -358,13 +358,12 @@ class DatasetManager:
     }
   """
   def __create_dataset_from_meta_calculations(self, previous_results, inputs):
-    dfs = {}
+    dataset = {}
     for input_settings in inputs:
       previous_df = previous_results.get(input_settings['dataframe']).get('dataframe')
-      print(input_settings['calculations'])
       df = self.__add_calculations(previous_df, input_settings['calculations'])
-      dfs.update({input_settings['name']:df})
-    return dfs
+      dataset.update({input_settings['dataframe']: df})
+    return dataset
 
   def __get_dataframes_from_meta_datasets(self, meta_datasets, output):
     return meta_datasets[output['dataframe']]
@@ -374,7 +373,8 @@ class DatasetManager:
     for dataset in meta_input_settings['datasets']:
       new_dataset = self.__create_dataset_from_meta_calculations(previous_results, dataset['inputs'])
       df = self.__get_dataframe_from_meta_datasets(new_dataset, dataset['output'])
-      result = {meta_input_settings['name']:{
+      result = {
+        meta_input_settings['name']:{
           'datasets': df,
           # 'output': output,
         }
