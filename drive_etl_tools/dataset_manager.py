@@ -365,23 +365,26 @@ class DatasetManager:
       dataset.update({input_settings['dataframe']: df})
     return dataset
 
-  def __get_dataframe_from_meta_datasets(self, meta_datasets, output):
+  def __get_dataframe_from_meta_dataset(self, meta_datasets, output):
     return meta_datasets[output['dataframe']]
 
   def __get_datasets_from_meta_inputs(self, previous_results, meta_input_settings):
     datasets = {}
-    for dataset_settings in meta_input_settings['datasets']:
-      new_dataset = self.__create_dataset_from_meta_calculations(previous_results, dataset_settings['inputs'])
-      df = self.__get_dataframe_from_meta_datasets(new_dataset, dataset_settings['output'])
+    for dataset_settings in meta_input_settings:
+      dataset = self.__create_dataset_from_meta_calculations(previous_results, dataset_settings['inputs'])
+      df = self.__get_dataframe_from_meta_dataset(dataset, dataset_settings['output'])
       result = {
         dataset_settings['name']:{
-          'datasets': df,
+          'dataset': dataset,
+          'dataframe': df
         }
       }
       datasets.update(result)
     return datasets
 
-  def __get_meta_outputs_from_datasets(self, datasets, output_settings):
+  def __get_outputs_from_meta_datasets(self, datasets, outputs):
+    for output_settings in outputs:
+      output = self.__get_outputs_from_dataframe(df, output_settings, export=False)
     meta_outputs = datasets
     return meta_outputs
 
