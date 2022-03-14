@@ -63,7 +63,7 @@ class DatasetManager:
       df = df.reset_index(drop=True)
     return df, sh
 
-  def __apply_function(self, df, inplace=False, name=None, inputs=None, function=None, args=None, kwargs=None):
+  def __apply_function(self, df, get_df=False, name=None, inputs=None, function=None, args=None, kwargs=None):
     apply_function = self.etl_functions[function]
     #    Can't be '' here because '' could be an input column
     input_columns = df.columns.values[0] if (inputs is None) else inputs
@@ -79,7 +79,7 @@ class DatasetManager:
       apply_kwargs['axis'] = 1
     # Apply function to dataframe with input, args, and kwargs
     new_column = df[input_columns].apply(apply_function, **apply_kwargs)
-    if inplace:
+    if get_df:
       df_new = df.copy()
       df_new[name] = new_column
       return df_new
@@ -345,9 +345,39 @@ class DatasetManager:
     }
     return result
 
-  def __update_meta_datasets(self, settings, results):
-    input_dfs = [results.get(input_name) for input_name in settings['inputs']]
-    print(settings)
+  """
+    previous_results = {
+      'writers':{
+        'dataframe': writers_df,
+        'output': [[composers_df, composers_path], [publishers_df, publishers_path]]
+      },
+      'songs':{
+        'dataframe': songs_df,
+        'output': [[tracks_df, tracks_path], [releases_df, releases_path]]
+      }
+    }
+  """
+  def __create_df_from_meta_calculations(self, input_settings, previous_results):
+    previous_df = previous_results.get(input_settings['dataframe'])
+    df = self.__add_calculations(previous_df, input_settings['calculations'])
+    return df
+
+  def __get_datasets_from_meta_inputs(self, meta_input_settings, previous_results):
+    datasets = {}
+    self.__update_functions(meta_input_settings['functions'])
+    for dataset in meta_input_settings['datasets']:
+      df = self.__create_df_from_meta_calculations(dataset['inputs'], previous_results)
+      dataset.update({meta_input_settings['name']:df})
+    return datasets
+
+  def __get_meta_outputs_from_datasets(self, datasets, output_settings):
+    meta_outputs = datasets
+    return meta_outputs
+
+  def __update_meta_datasets(self, previous_results, settings):
+    datasets = self.__get_datasets_from_meta_inputs(previous_results, settings['inputs'])
+    outputs = self.__get_meta_outputs_from_datasets(datasets, settings['outputs'])
+    return outputs
 
   def run_update(self, settings_location):
     self.__update_start_time()
