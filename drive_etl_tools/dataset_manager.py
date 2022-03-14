@@ -376,10 +376,9 @@ class DatasetManager:
       result = {
         dataset_settings['name']:{
           'datasets': df,
-          # 'output': output,
         }
       }
-      datasets.update()
+      datasets.update(result)
     return datasets
 
   def __get_meta_outputs_from_datasets(self, datasets, output_settings):
