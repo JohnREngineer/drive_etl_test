@@ -375,7 +375,7 @@ class DatasetManager:
     return meta_outputs
 
   def __update_meta_datasets(self, previous_results, settings):
-    datasets = [for self.__get_datasets_from_meta_inputs(previous_results, settings['inputs'])
+    datasets = self.__get_datasets_from_meta_inputs(previous_results, settings['inputs'])
     outputs = self.__get_meta_outputs_from_datasets(datasets, settings['outputs'])
     return outputs
 
