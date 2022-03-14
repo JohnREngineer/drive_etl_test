@@ -361,6 +361,7 @@ class DatasetManager:
     dfs = {}
     for input_settings in inputs:
       previous_df = previous_results.get(input_settings['dataframe']).get('dataframe')
+      print(input_settings['calculations'])
       df = self.__add_calculations(previous_df, input_settings['calculations'])
       dfs.update({input_settings['name']:df})
     return dfs
