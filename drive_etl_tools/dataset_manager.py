@@ -348,28 +348,30 @@ class DatasetManager:
     return df
 
   def __get_dataset_from_input_settings(self, input_settings):
-    datasets = {}
+    df = None
+    dataset = {}
     input_locations = self.__get_input_locations(input_settings)
     if input_locations:
       df = self.__get_dataframe_from_input_locations(input_locations, input_settings['defaults'])
       if len(df) > 0:
         df = self.__add_calculations(df, input_settings['calculations'])
-        datasets.update({input_settings['dataset_output']['dataframe_name']:df})
+        dataset = {input_settings['dataset_output']['dataframe_name']: df}
+        # datasets.update({input_settings['dataset_output']['dataframe_name']:df})
       else: print('\nAll input files are empty.')
     else: print('No input files found.')
-    return datasets
+    return df, dataset
 
   def __run_etls(self, etl_settings):
     # self.pv(':getting %s'%etl_settings['dataset_input_settings'])
-    dataset = self.__get_dataset_from_input_settings(etl_settings['dataset_input_settings'])
+    df, dataset = self.__get_dataset_from_input_settings(etl_settings['dataset_input_settings'])
     # self.pv('__run_etls:dataset',dataset)
-    output_dict, df, path = self.__get_output_dict_from_dataset(dataset, etl_settings['dataset_output_settings'])
+    output_dict, df_out, path = self.__get_output_dict_from_dataset(dataset, etl_settings['dataset_output_settings'])
     # output_dict = self.__get_outputs_dict_from_meta_dataframe_dict(dataset, etl_settings['dataset_output_settings'])
     # self.pv('__run_etls:output_dict',output_dict)
     result = {
       etl_settings['etl_name']: {
         'output_dict': output_dict,
-        'dataframe': df[0],
+        'dataframe': df,
         'path': path
       }
     }
