@@ -310,7 +310,7 @@ class DatasetManager:
     for file_output_settings in file_output_settings_list:
         # dataset = {file_output_settings['sheet_output_settings_list'][0]['dataframe_name']:input_dataset}
         file_dict, df, path = self.__get_file_output_from_meta_dataframe(input_dataset, file_output_settings)
-        outputs.append([df,path,file_dict])
+        outputs.append([file_dict,df,path])
         # for sheet_output_settings in file_output_settings['sheet_output_settings_list']:
         #   outputs.append(self.__get_sheet_output_from_dataframe(input_df, sheet_output_settings))
     transposed_outputs = list(map(list,list(zip(*outputs))))
