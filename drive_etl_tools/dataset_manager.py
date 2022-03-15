@@ -319,12 +319,12 @@ class DatasetManager:
     error_strings = []
     for calc in calculations:
       required_values = calc.pop('required_values', None) # We do this first to remove required_values from calc
-      df[calc['column_name']] = self.__apply_function(df, **calc)
+      df[calc['name']] = self.__apply_function(df, **calc)
       if required_values is not None:
-        non_compliant = df.loc[[c not in required_values for c in df[calc['column_name']]]]
+        non_compliant = df.loc[[c not in required_values for c in df[calc['name']]]]
         if len(non_compliant) > 0:
           error_locations = ', '.join([str(n+input['start']+1) for n in non_compliant.index.values])
-          error_strings.append('Non-compliant values for [%s] found in the following rows: %s' % (calc['column_name'], error_locations))
+          error_strings.append('Non-compliant values for [%s] found in the following rows: %s' % (calc['name'], error_locations))
     if error_strings:
       raise ValueError('\n'.join(error_strings))
     return df
