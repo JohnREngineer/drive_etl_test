@@ -83,8 +83,8 @@ class DatasetManager:
     if isinstance(input_columns, list):
       apply_kwargs['axis'] = 1
     # Apply function to dataframe with input, args, and kwargs
-    if not isinstance(input_columns, list) and (input_columns not in df.columns.values):
-      print(df.columns.values)
+    # if not isinstance(input_columns, list) and (input_columns not in df.columns.values):
+    #   print(df.columns.values)
     new_column = df[input_columns].apply(apply_function, **apply_kwargs)
     if get_df:
       df_new = df.copy()
@@ -220,7 +220,7 @@ class DatasetManager:
         'folder': lambda i:'Inputs from folder: %s' % (self.folder_string % self.__sanitize_key(i['location']['key'])),
     }
     result = inputs_getters[inputs['type']](inputs)
-    print(inputs_prints[inputs['type']](inputs))
+    # print(inputs_prints[inputs['type']](inputs))
     return result
 
   def __get_empty_output(self, n):
