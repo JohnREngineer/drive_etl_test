@@ -462,9 +462,9 @@ class DatasetManager:
 
   def pv(self, text=None, object=None):
     if self.verbose:
-      if text:
+      if text is not None:
         print(text)
-      if object:
+      if object is not None:
         pprint.pprint(object)
 
   def run_ETLs(self, etl_settings_location):
