@@ -255,7 +255,7 @@ class DatasetManager:
     return df, parent_sheet
 
   def __export_to_excel_from_template(self, df, path, template_location, nick_names=None):
-    self.pv('__export_to_excel_from_template:template_location %s'%template_location)
+    # self.pv('__export_to_excel_from_template:template_location %s'%template_location)
     template_path = self.__download_drive_file(self.__sanitize_key(template_location['key']))
     os.rename(template_path, path)
     sheet_name = template_location.get('sheet',0)
@@ -286,7 +286,7 @@ class DatasetManager:
       print('Appended new data to parent dataset.')
     
   def __get_sheet_output_from_dataframe(self, input_df, sheet_output_settings):
-    self.pv('__get_output_from_dataframe:output settings %s'%sheet_output_settings)
+    # self.pv('__get_output_from_dataframe:output settings %s'%sheet_output_settings)
     df = self.__apply_filters(input_df, sheet_output_settings.get('filters'))
     df, nick_names = self.__get_output_from_columns(df, sheet_output_settings['columns'])
     df, parent_sheet = self.__deduplicate_dataset(df, sheet_output_settings.get('dedup_column'), sheet_output_settings.get('parent_dataset'))
@@ -300,7 +300,7 @@ class DatasetManager:
     return [df, path]
 
   def __get_outputs_from_dataframe(self, input_df, file_output_settings_list):
-    self.pv('__get_outputs_from_dataframe:output settings %s'%file_output_settings_list)
+    # self.pv('__get_outputs_from_dataframe:output settings %s'%file_output_settings_list)
     if (input_df is None) or (len(input_df) == 0) :
       return self.__get_empty_output(len(file_output_settings_list))
     # outputs = []
@@ -358,7 +358,7 @@ class DatasetManager:
     df = self.__get_dataframe_from_input_settings(etl_settings['dataset_input_settings'])
     # self.pv(':got %s '%df.columns)
     output_dict = self.__get_outputs_from_dataframe(df, etl_settings['dataset_output_settings'])
-    self.pv('__run_etls:output_dict %s'%output_dict)
+    self.pv('__run_etls:output_dict',output_dict)
     result = {
       etl_settings['etl_name']: {
         'dataframe': df,
@@ -452,9 +452,12 @@ class DatasetManager:
     outputs_dict = self.__get_outputs_dict_from_meta_dataframe_dict(dataframe_dict, etl_settings['dataset_output_settings'])
     return outputs_dict
 
-  def pv(self, text):
+  def pv(self, text=None, object=None):
     if self.verbose:
-      pprint.pprint(text)
+      if text:
+        print(text)
+      if object:
+        pprint.pprint(object)
 
   def run_ETLs(self, etl_settings_location):
     self.upload = False
