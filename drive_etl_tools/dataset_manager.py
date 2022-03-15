@@ -411,7 +411,9 @@ class DatasetManager:
     os.rename(template_path, path)
     sheet_dataframes_dict = {}
     for sheet_output_settings in file_output_settings['sheet_output_settings_list']:
+      self.pv('__get_file_output_from_meta_dataframe:sheet_output_settings',sheet_output_settings)
       input_df = dataframes.get(sheet_output_settings['dataframe_name'])
+      self.pv('__get_file_output_from_meta_dataframe:input_df',input_df)
       df_dict = self.__get_sheet_output_from_meta_dataframe(input_df, path, sheet_output_settings)
       sheet_dataframes_dict.update(df_dict)
     if sheet_dataframes_dict:
