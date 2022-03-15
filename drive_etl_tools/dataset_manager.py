@@ -284,8 +284,8 @@ class DatasetManager:
         parent_sheet.append_rows(values=[list(row.values)])
       print('Appended new data to parent dataset.')
     
-  def __get_output_from_dataframe(self, input_df, output_settings):
-    self.pv(':output settings %s'%output_settings)
+  def __get_sheet_output_from_dataframe(self, input_df, output_settings):
+    self.pv('__get_output_from_dataframe:output settings %s'%output_settings)
     df = self.__apply_filters(input_df, output_settings.get('filters'))
     df, nick_names = self.__get_output_from_columns(df, output_settings['columns'])
     df, parent_sheet = self.__deduplicate_dataset(df, output_settings.get('dedup_column'), output_settings.get('parent_dataset'))
@@ -299,9 +299,13 @@ class DatasetManager:
     return [df, path]
 
   def __get_outputs_from_dataframe(self, input_df, output_settings_list):
+    self.pv('__get_outputs_from_dataframe:output settings %s'%output_settings_list)
     if (input_df is None) or (len(input_df) == 0) :
       return self.__get_empty_output(len(output_settings_list))
-    outputs = [self.__get_output_from_dataframe(input_df, output_settings) for output_settings in output_settings_list]
+    outputs = []
+    for output_settings in output_settings_list:
+      for sheet_output_settings in output_settings['sheet_output_settings_list']:
+        outputs.append(self.__get_sheet_output_from_dataframe(input_df, output_settings['sheet_output_settings_list']))
     transposed_outputs = list(map(list,list(zip(*outputs))))
     return transposed_outputs
 
