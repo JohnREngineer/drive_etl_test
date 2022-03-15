@@ -369,7 +369,7 @@ class DatasetManager:
     result = {
       etl_settings['etl_name']: {
         'output_dict': output_dict,
-        'dataframe': df,
+        'dataframe': df[0],
         'path': path
       }
     }
