@@ -268,7 +268,7 @@ class DatasetManager:
     print('\t\tCreated %s'%(path))
 
   def __upload_file_to_folder(self, path, folder=None):
-    if folder.get('key') and self.upload:
+    if folder and folder.get('key') and self.upload:
       sanitized_key = self.__sanitize_key(folder['key'])
       f = self.drive.CreateFile({'parents': [{'kind': 'drive#fileLink', 'id': sanitized_key}]})
       f.SetContentFile(path)
@@ -426,8 +426,8 @@ class DatasetManager:
       df_dict = self.__get_sheet_output_from_meta_dataframe(input_df, path, sheet_output_settings)
       sheet_dataframes_dict.update(df_dict)
     if sheet_dataframes_dict:
-      self.__upload_file_to_folder(path, sheet_output_settings.get('folder'))
-    file_dict = {sheet_output_settings['name']: sheet_dataframes_dict}
+      self.__upload_file_to_folder(path, file_output_settings.get('folder'))
+    file_dict = {file_output_settings['name']: sheet_dataframes_dict}
     return [file_dict, path]
 
   def __get_outputs_dict_from_meta_dataframe_dict(self, dataframes, file_output_settings_list):
