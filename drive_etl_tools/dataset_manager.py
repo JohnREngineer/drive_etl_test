@@ -361,7 +361,7 @@ class DatasetManager:
   def __run_etls(self, etl_settings):
     # self.pv(':getting %s'%etl_settings['dataset_input_settings'])
     dataset = self.__get_dataset_from_input_settings(etl_settings['dataset_input_settings'])
-    self.pv('__run_etls:dataset',dataset)
+    # self.pv('__run_etls:dataset',dataset)
     outputs_dict, dfs, paths = self.__get_output_dict_from_dataset(dataset, etl_settings['dataset_output_settings'])
     # output_dict = self.__get_outputs_dict_from_meta_dataframe_dict(dataset, etl_settings['dataset_output_settings'])
     # self.pv('__run_etls:output_dict',output_dict)
@@ -371,12 +371,13 @@ class DatasetManager:
         'path': paths[0]
       }
     }
-    self.pv(':result %s'%result)
+    # self.pv(':result %s'%result)
     # return result
     return result
 
   def __create_dataset_from_meta_calculations(self, previous_results, dataset_input_settings):
     dataset = {}
+    self.pv('__create_dataset_from_meta_calculations:previous_results',previous_results)
     for input_settings in dataset_input_settings:
       previous_df = previous_results.get(input_settings['dataframe_name']).get('dataframe')
       df = self.__add_calculations(previous_df, input_settings['calculations'])
@@ -419,9 +420,9 @@ class DatasetManager:
     sheet_dataframes_dict = {}
     dfs = []
     for sheet_output_settings in file_output_settings['sheet_output_settings_list']:
-      self.pv('__get_file_output_from_meta_dataframe:sheet_output_settings',sheet_output_settings)
+      # self.pv('__get_file_output_from_meta_dataframe:sheet_output_settings',sheet_output_settings)
       input_df = dataframes.get(sheet_output_settings['dataframe_name'])
-      self.pv('__get_file_output_from_meta_dataframe:input_df',input_df)
+      # self.pv('__get_file_output_from_meta_dataframe:input_df',input_df)
       df_dict, df = self.__get_sheet_output_from_meta_dataframe(input_df, path, sheet_output_settings)
       sheet_dataframes_dict.update(df_dict)
       dfs.append(df)
@@ -475,13 +476,13 @@ class DatasetManager:
     self.upload = False
     etl_settings = self.__get_etl_settings_from_location(etl_settings_location)
     self.__update_functions(etl_settings['functions'])
-    self.verbose = True
     results_list = [self.__run_etls(s) for s in etl_settings['etls']]
     results = {}
     for r in results_list:
       results.update(r)
     self.upload=True
     self.pv('run_ETLs:results',results)
+    self.verbose = True
     meta_outputs_dict = [self.__run_meta_etls(results, s) for s in etl_settings['meta_etls']]
     return meta_outputs_dict
     transposed_output = list(map(list,list(zip(*results)))) 
