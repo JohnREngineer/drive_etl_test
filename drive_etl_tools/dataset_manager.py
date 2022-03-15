@@ -382,6 +382,7 @@ class DatasetManager:
     self.pv('__create_dataset_from_meta_calculations:previous_results',previous_results)
     for input_settings in dataset_input_settings:
       previous_df = previous_results.get(input_settings['dataframe_name']).get('dataframe')
+      self.pv('__create_dataset_from_meta_calculations:previous_df',previous_df)
       df = self.__add_calculations(previous_df, input_settings['calculations'])
       dataset.update({input_settings['dataframe_name']: df})
     return dataset
