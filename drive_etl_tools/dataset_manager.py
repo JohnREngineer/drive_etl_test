@@ -361,16 +361,18 @@ class DatasetManager:
     # self.pv(':getting %s'%etl_settings['dataset_input_settings'])
     dataset = self.__get_dataset_from_input_settings(etl_settings['dataset_input_settings'])
     self.pv('__run_etls:dataset',dataset)
-    output_dict = self.__get_output_dict_from_dataset(dataset, etl_settings['dataset_output_settings'])
+    # output_dict = self.__get_output_dict_from_dataset(dataset, etl_settings['dataset_output_settings'])
+    output_dict = self.__get_outputs_dict_from_meta_dataframe_dict(dataset, etl_settings['dataset_output_settings'])
     self.pv('__run_etls:output_dict',output_dict)
-    result = {
-      etl_settings['etl_name']: {
-        'dataframe': dataset,
-        'output_dict': output_dict,
-      }
-    }
-    self.pv(':result %s'%result)
-    return result
+    # result = {
+    #   etl_settings['etl_name']: {
+    #     'dataframe': dataset,
+    #     'output_dict': output_dict,
+    #   }
+    # }
+    # self.pv(':result %s'%result)
+    # return result
+    return output_dict
 
   def __create_dataset_from_meta_calculations(self, previous_results, dataset_input_settings):
     dataset = {}
