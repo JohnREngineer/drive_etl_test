@@ -447,6 +447,7 @@ class DatasetManager:
 
   def run_ETLs(self, etl_settings_location):
     self.upload = False
+    self.verbose = True
     etl_settings = self.__get_etl_settings_from_location(etl_settings_location)
     self.__update_functions(etl_settings['functions'])
     results_list = [self.__run_etls(s) for s in etl_settings['etls']]
