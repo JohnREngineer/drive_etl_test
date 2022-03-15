@@ -313,8 +313,9 @@ class DatasetManager:
         outputs.append([file_dict,df,path])
         # for sheet_output_settings in file_output_settings['sheet_output_settings_list']:
         #   outputs.append(self.__get_sheet_output_from_dataframe(input_df, sheet_output_settings))
-    transposed_outputs = list(map(list,list(zip(*outputs))))
-    return transposed_outputs
+    # transposed_outputs = list(map(list,list(zip(*outputs))))
+    # return transposed_outputs
+    return outputs[0]
     # return outputs_dict
 
 
@@ -362,13 +363,14 @@ class DatasetManager:
     # self.pv(':getting %s'%etl_settings['dataset_input_settings'])
     dataset = self.__get_dataset_from_input_settings(etl_settings['dataset_input_settings'])
     # self.pv('__run_etls:dataset',dataset)
-    outputs_dict, dfs, paths = self.__get_output_dict_from_dataset(dataset, etl_settings['dataset_output_settings'])
+    output_dict, df, path = self.__get_output_dict_from_dataset(dataset, etl_settings['dataset_output_settings'])
     # output_dict = self.__get_outputs_dict_from_meta_dataframe_dict(dataset, etl_settings['dataset_output_settings'])
     # self.pv('__run_etls:output_dict',output_dict)
     result = {
       etl_settings['etl_name']: {
-        'dataframe': dfs[0],
-        'path': paths[0]
+        'output_dict': output_dict,
+        'dataframe': df,
+        'path': path
       }
     }
     # self.pv(':result %s'%result)
