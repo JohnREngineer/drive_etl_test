@@ -284,18 +284,18 @@ class DatasetManager:
         parent_sheet.append_rows(values=[list(row.values)])
       print('Appended new data to parent dataset.')
     
-  def __get_sheet_output_from_dataframe(self, input_df, output_settings):
-    self.pv('__get_output_from_dataframe:output settings %s'%output_settings)
-    df = self.__apply_filters(input_df, output_settings.get('filters'))
-    df, nick_names = self.__get_output_from_columns(df, output_settings['columns'])
-    df, parent_sheet = self.__deduplicate_dataset(df, output_settings.get('dedup_column'), output_settings.get('parent_dataset'))
-    print('\tNew %s:\t%s' % (output_settings['name'], len(df)))
+  def __get_sheet_output_from_dataframe(self, input_df, sheet_output_settings):
+    self.pv('__get_output_from_dataframe:output settings %s'%sheet_output_settings)
+    df = self.__apply_filters(input_df, sheet_output_settings.get('filters'))
+    df, nick_names = self.__get_output_from_columns(df, sheet_output_settings['columns'])
+    df, parent_sheet = self.__deduplicate_dataset(df, sheet_output_settings.get('dedup_column'), sheet_output_settings.get('parent_dataset'))
+    print('\tNew %s:\t%s' % (sheet_output_settings['sheet_name'], len(df)))
     path = None
     if (len(df) > 0):
-      path = 'New_%s_%s.xlsx'%(output_settings['name'], self.start_time_unix)
+      path = 'New_%s_%s.xlsx'%(sheet_output_settings['sheet_name'], self.start_time_unix)
       self.__append_to_parent_sheet(df, parent_sheet)
-      self.__export_to_excel_from_template(df, path, output_settings.get('excel_template_location'), nick_names)
-      self.__upload_file_to_folder(path, output_settings.get('export_folder'))
+      self.__export_to_excel_from_template(df, path, sheet_output_settings.get('excel_template_location'), nick_names)
+      self.__upload_file_to_folder(path, sheet_output_settings.get('export_folder'))
     return [df, path]
 
   def __get_outputs_from_dataframe(self, input_df, output_settings_list):
@@ -351,9 +351,9 @@ class DatasetManager:
   def __run_etls(self, etl_settings):
     # self.pv(':getting %s'%etl_settings['dataset_input_settings'])
     df = self.__get_dataframe_from_input_settings(etl_settings['dataset_input_settings'])
-    self.pv(':got %s '%df.columns)
+    # self.pv(':got %s '%df.columns)
     outputs = self.__get_outputs_from_dataframe(df, etl_settings['dataset_output_settings'])
-    self.pv(':output %s'%outputs)
+    self.pv('__run_etls:output %s'%outputs)
     result = {
       etl_settings['etl_name']: {
         'dataframe': df,
