@@ -366,13 +366,13 @@ class DatasetManager:
   def __create_dataset_from_meta_calculations(self, previous_results, inputs):
     dataset = {}
     for input_settings in inputs:
-      previous_df = previous_results.get(input_settings['dataframe']).get('dataframe')
+      previous_df = previous_results.get(input_settings['dataframe_name']).get('dataframe')
       df = self.__add_calculations(previous_df, input_settings['calculations'])
-      dataset.update({input_settings['dataframe']: df})
+      dataset.update({input_settings['dataframe_name']: df})
     return dataset
 
   def __get_dataframe_from_meta_dataset(self, meta_datasets, output):
-    return meta_datasets[output['dataframe']]
+    return meta_datasets[output['dataframe_name']]
 
   def __get_dataframe_dict_from_meta_inputs(self, previous_results, meta_input_settings):
     dataframe_dict = {}
@@ -417,13 +417,12 @@ class DatasetManager:
     return {sheet_output_settings['name']: df}    
 
   def __get_file_output_from_meta_dataframe(self, dataframes, file_output_settings):
-    input_df = dataframes.get(file_output_settings['dataframe'])
-    path = 'New_%s_%s.xlsx'%(sheet_output_settings['name'], self.start_time_unix)
-    template_location = file_output_settings['excel']
-    template_path = self.__download_drive_file(self.__sanitize_key(template_location['key']))
+    path = 'New_%s_%s.xlsx'%(file_output_settings['name'], self.start_time_unix)
+    template_path = self.__download_drive_file(self.__sanitize_key(file_output_settings['excel']['key']))
     os.rename(template_path, path)
     sheet_dataframes_dict = {}
     for sheet_output_settings in file_output_settings['sheets']:
+      input_df = dataframes.get(sheet_output_settings['dataframe_name'])
       df_dict = self.__get_sheet_output_from_meta_dataframe(input_df, path, sheet_output_settings)
       sheet_dataframes_dict.update(df_dict)
     if sheet_dataframes_dict:
