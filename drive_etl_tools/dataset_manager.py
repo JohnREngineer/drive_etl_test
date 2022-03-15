@@ -472,12 +472,12 @@ class DatasetManager:
     self.verbose = True
     etl_settings = self.__get_etl_settings_from_location(etl_settings_location)
     self.__update_functions(etl_settings['functions'])
-    results_list = [self.__run_etls(s) for s in etl_settings['etls']]
-    results = {}
-    for r in results_list:
-      results.update(r)
+    results_dict = [self.__run_etls(s) for s in etl_settings['etls']]
+    # results = {}
+    # for r in results_list:
+    #   results.update(r)
     self.upload=True
-    meta_outputs_dict = [self.__run_meta_etls(results, s) for s in etl_settings['meta_etls']]
+    meta_outputs_dict = [self.__run_meta_etls(results_dict, s) for s in etl_settings['meta_etls']]
     return meta_outputs_dict
     transposed_output = list(map(list,list(zip(*results)))) 
     dfs, paths = [list(itertools.chain(*o)) for o in transposed_output]
