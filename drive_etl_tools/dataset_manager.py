@@ -255,6 +255,7 @@ class DatasetManager:
     return df, parent_sheet
 
   def __export_to_excel_from_template(self, df, path, template_location, nick_names=None):
+    self.pv('__export_to_excel_from_template:template_location %s'%template_location)
     template_path = self.__download_drive_file(self.__sanitize_key(template_location['key']))
     os.rename(template_path, path)
     sheet_name = template_location.get('sheet',0)
@@ -298,16 +299,20 @@ class DatasetManager:
       self.__upload_file_to_folder(path, sheet_output_settings.get('export_folder'))
     return [df, path]
 
-  def __get_outputs_from_dataframe(self, input_df, output_settings_list):
-    self.pv('__get_outputs_from_dataframe:output settings %s'%output_settings_list)
+  def __get_outputs_from_dataframe(self, input_df, file_output_settings_list):
+    self.pv('__get_outputs_from_dataframe:output settings %s'%file_output_settings_list)
     if (input_df is None) or (len(input_df) == 0) :
-      return self.__get_empty_output(len(output_settings_list))
-    outputs = []
-    for output_settings in output_settings_list:
-      for sheet_output_settings in output_settings['sheet_output_settings_list']:
-        outputs.append(self.__get_sheet_output_from_dataframe(input_df, sheet_output_settings))
-    transposed_outputs = list(map(list,list(zip(*outputs))))
-    return transposed_outputs
+      return self.__get_empty_output(len(file_output_settings_list))
+    # outputs = []
+    outputs_dict = {}
+    for file_output_settings in file_output_settings_list:
+        outputs_dict.update(self.__get_file_output_from_meta_dataframe({file_output_settings['file_name']:input_df}, file_output_settings))
+        # for sheet_output_settings in file_output_settings['sheet_output_settings_list']:
+        #   outputs.append(self.__get_sheet_output_from_dataframe(input_df, sheet_output_settings))
+    # transposed_outputs = list(map(list,list(zip(*outputs))))
+    # return transposed_outputs
+    return outputs_dict
+
 
   def __get_dataframe_from_input_locations(self, input_locations, defaults=None):
     dfs = []
@@ -352,12 +357,12 @@ class DatasetManager:
     # self.pv(':getting %s'%etl_settings['dataset_input_settings'])
     df = self.__get_dataframe_from_input_settings(etl_settings['dataset_input_settings'])
     # self.pv(':got %s '%df.columns)
-    outputs = self.__get_outputs_from_dataframe(df, etl_settings['dataset_output_settings'])
-    self.pv('__run_etls:output %s'%outputs)
+    output_dict = self.__get_outputs_from_dataframe(df, etl_settings['dataset_output_settings'])
+    self.pv('__run_etls:output_dict %s'%output_dict)
     result = {
       etl_settings['etl_name']: {
         'dataframe': df,
-        'outputs': outputs,
+        'output_dict': output_dict,
       }
     }
     self.pv(':result %s'%result)
