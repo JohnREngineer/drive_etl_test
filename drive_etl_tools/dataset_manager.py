@@ -299,16 +299,14 @@ class DatasetManager:
       self.__upload_file_to_folder(path, sheet_output_settings.get('export_folder'))
     return [df, path]
 
-  def __get_output_dict_from_dataset(self, input_dataset, file_output_settings_list):
-    self.pv('__get_output_dict_from_dataset:input_dataset',input_dataset)
-    if not input_dataset:
-      return {}
-    # if (input_dataset is None) or (len(input_dataset) == 0) :
-    #   return self.__get_empty_output(len(file_output_settings_list))
+  def __get_output_dict_from_dataset(self, input_df, file_output_settings_list):
+    # self.pv('__get_outputs_from_dataframe:output settings %s'%file_output_settings_list)
+    if (input_df is None) or (len(input_df) == 0) :
+      return self.__get_empty_output(len(file_output_settings_list))
     # outputs = []
     outputs_dict = {}
     for file_output_settings in file_output_settings_list:
-        outputs_dict.update(self.__get_file_output_from_meta_dataframe({file_output_settings['sheet_output_settings_list'][0]['dataframe_name']:input_dataset}, file_output_settings))
+        outputs_dict.update(self.__get_file_output_from_meta_dataframe({file_output_settings['sheet_output_settings_list'][0]['dataframe_name']:input_df}, file_output_settings))
         # for sheet_output_settings in file_output_settings['sheet_output_settings_list']:
         #   outputs.append(self.__get_sheet_output_from_dataframe(input_df, sheet_output_settings))
     # transposed_outputs = list(map(list,list(zip(*outputs))))
@@ -437,20 +435,20 @@ class DatasetManager:
       outputs_dict.update(output)
     return outputs_dict
 
-  def __get_dataset_from_input_settings(self, input_settings):
-    self.__get_dataset_from_input_settings(input_settings)
-    df = None
-    input_locations = self.__get_input_locations(input_settings)
-    if input_locations:
-      df = self.__get_dataframe_from_input_locations(input_locations, input_settings['defaults'])
-      if len(df) > 0:
-        df = self.__add_calculations(df, input_settings['calculations'])
-      else: print('\nAll input files are empty.')
-    else: print('No input files found.')
-    dataset = {
-      'name': df
-    }
-    return df
+  # def __get_dataset_from_input_settings(self, input_settings):
+  #   self.__get_dataframe_from_input_settings(input_settings)
+  #   df = None
+  #   input_locations = self.__get_input_locations(input_settings)
+  #   if input_locations:
+  #     df = self.__get_dataframe_from_input_locations(input_locations, input_settings['defaults'])
+  #     if len(df) > 0:
+  #       df = self.__add_calculations(df, input_settings['calculations'])
+  #     else: print('\nAll input files are empty.')
+  #   else: print('No input files found.')
+  #   dataset = {
+  #     'name': df
+  #   }
+  #   return df
 
   def __run_meta_etls(self, previous_results, etl_settings):
     dataframe_dict = self.__get_dataframe_dict_from_previous_results(previous_results, etl_settings['dataset_input_settings'])
