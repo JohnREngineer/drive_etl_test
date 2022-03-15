@@ -443,7 +443,7 @@ class DatasetManager:
 
   def pv(self, text):
     if self.verbose:
-      print('text')
+      print(text)
 
   def run_ETLs(self, etl_settings_location):
     self.upload = False
