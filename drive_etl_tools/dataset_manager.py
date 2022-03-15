@@ -397,7 +397,7 @@ class DatasetManager:
     for dataset_settings in etl_input_settings:
       dataset = self.__create_dataset_from_meta_calculations(previous_results, dataset_settings['dataset_input_settings_list'])
       df = self.__get_output_dataframe_from_dataset(dataset, dataset_settings['dataset_output'])
-      result = { dataset_settings['name']: df}
+      result = { dataset_settings['dataset_name']: df}
       dataframe_dict.update(result)
     return dataframe_dict
 
