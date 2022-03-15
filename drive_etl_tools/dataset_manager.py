@@ -478,16 +478,16 @@ class DatasetManager:
         pprint.pprint(object)
 
   def run_ETLs(self, etl_settings_location):
-    self.upload = False
+    # self.upload = False
     etl_settings = self.__get_etl_settings_from_location(etl_settings_location)
     self.__update_functions(etl_settings['functions'])
     results_list = [self.__run_etls(s) for s in etl_settings['etls']]
     results = {}
     for r in results_list:
       results.update(r)
-    self.upload=True
+    # self.upload=True
     self.pv('run_ETLs:results',results)
-    self.verbose = True
+    # self.verbose = True
     meta_outputs_dict = [self.__run_meta_etls(results, s) for s in etl_settings['meta_etls']]
     return meta_outputs_dict
     transposed_output = list(map(list,list(zip(*results)))) 
