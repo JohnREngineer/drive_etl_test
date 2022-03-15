@@ -15,6 +15,8 @@ import itertools
 
 class DatasetManager:
   def __init__(self):
+    self.upload = True
+    self.verbose = False
     self.start_time_unix = ''
     self.etl_functions = {}
     self.folder_string = 'https://drive.google.com/drive/folders/%s'
@@ -341,14 +343,18 @@ class DatasetManager:
     return df
 
   def __run_etls(self, etl_settings):
+    self.pv(':getting %s'%etl_settings['dataset_input_settings'])
     df = self.__get_dataframe_from_input_settings(etl_settings['dataset_input_settings'])
+    self.pv(':got %s '%df.columns)
     outputs = self.__get_outputs_from_dataframe(df, etl_settings['outputs'])
+    self.pv(':output %s'%outputs)
     result = {
       etl_settings['etl_name']: {
         'dataframe': df,
         'outputs': outputs,
       }
     }
+    self.pv(':result %s'%result)
     return result
 
   def __create_dataset_from_meta_calculations(self, previous_results, dataset_input_settings):
@@ -434,6 +440,10 @@ class DatasetManager:
     dataframe_dict = self.__get_dataframe_dict_from_previous_results(previous_results, etl_settings['dataset_input_settings'])
     outputs_dict = self.__get_outputs_dict_from_meta_dataframe_dict(dataframe_dict, etl_settings['dataset_output_settings'])
     return outputs_dict
+
+  def pv(self, text):
+    if self.verbose:
+      print('text')
 
   def run_ETLs(self, etl_settings_location):
     self.upload = False
