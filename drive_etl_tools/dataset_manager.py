@@ -401,7 +401,7 @@ class DatasetManager:
     df, parent_sheet = self.__deduplicate_dataset(df, sheet_output_settings.get('dedup_column'), sheet_output_settings.get('parent_dataset'))
     print('\tNew %s:\t%s' % (sheet_output_settings['sheet_name'], len(df)))
     if (len(df) == 0):
-      return {}
+      return {}, None
     df.columns = nick_names
     self.__append_to_parent_sheet(df, parent_sheet)
     sheet_name = sheet_output_settings.get('sheet_name',0)
@@ -410,7 +410,7 @@ class DatasetManager:
         sheet_name = xl.sheet_names[int(sheet_name)]
     with pd.ExcelWriter(path,  engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
       df.to_excel(writer, sheet_name, index=False)
-    return {sheet_output_settings['sheet_name']: df}, df    
+    return {sheet_output_settings['sheet_name']: df}, df
 
   def __get_file_output_from_meta_dataframe(self, dataframes, file_output_settings):
     path = 'New_%s_%s.xlsx'%(file_output_settings['file_name'], self.start_time_unix)
