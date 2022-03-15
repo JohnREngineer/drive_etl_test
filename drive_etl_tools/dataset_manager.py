@@ -12,6 +12,7 @@ import importlib
 import pathlib
 import sys
 import itertools
+import pprint
 
 class DatasetManager:
   def __init__(self):
@@ -284,7 +285,7 @@ class DatasetManager:
       print('Appended new data to parent dataset.')
     
   def __get_output_from_dataframe(self, input_df, output_settings):
-    self.pv(output_settings)
+    self.pv(':output settings %s'%output_settings)
     df = self.__apply_filters(input_df, output_settings.get('filters'))
     df, nick_names = self.__get_output_from_columns(df, output_settings['columns'])
     df, parent_sheet = self.__deduplicate_dataset(df, output_settings.get('dedup_column'), output_settings.get('parent_dataset'))
@@ -444,7 +445,7 @@ class DatasetManager:
 
   def pv(self, text):
     if self.verbose:
-      print(text)
+      pprint.pprint(text)
 
   def run_ETLs(self, etl_settings_location):
     self.upload = False
