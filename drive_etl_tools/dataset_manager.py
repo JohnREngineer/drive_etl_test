@@ -346,7 +346,7 @@ class DatasetManager:
     self.pv(':getting %s'%etl_settings['dataset_input_settings'])
     df = self.__get_dataframe_from_input_settings(etl_settings['dataset_input_settings'])
     self.pv(':got %s '%df.columns)
-    outputs = self.__get_outputs_from_dataframe(df, etl_settings['outputs'])
+    outputs = self.__get_outputs_from_dataframe(df, etl_settings['dataset_output_settings'])
     self.pv(':output %s'%outputs)
     result = {
       etl_settings['etl_name']: {
