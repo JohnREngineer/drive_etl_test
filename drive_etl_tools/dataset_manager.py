@@ -202,8 +202,8 @@ class DatasetManager:
 
   def __get_inputs_from_folder(self, location):
     files = self.drive.ListFile({'q': "'{}' in parents and trashed=false".format(self.__sanitize_key(location['key']))}).GetList()
-    inputs = [{'key': f.get('id')} for f in files if f.get('mimeType') == 'application/vnd.google-apps.spreadsheet']
-    return inputs
+    input_locations = [{'key': f.get('id')} for f in files if f.get('mimeType') == 'application/vnd.google-apps.spreadsheet']
+    return input_locations
 
   def __get_input_locations(self, inputs):
     inputs_getters = {
@@ -290,8 +290,8 @@ class DatasetManager:
     if (len(df) > 0):
       path = 'New_%s_%s.xlsx'%(output_settings['name'], self.start_time_unix)
       self.__append_to_parent_sheet(df, parent_sheet)
-      self.__export_to_excel_from_template(df, path, output_settings.get('excel'), nick_names)
-      self.__upload_file_to_folder(path, output_settings.get('folder'))
+      self.__export_to_excel_from_template(df, path, output_settings.get('excel_template_location'), nick_names)
+      self.__upload_file_to_folder(path, output_settings.get('export_folder'))
     return [df, path]
 
   def __get_outputs_from_dataframe(self, input_df, output_settings_list):
@@ -301,7 +301,7 @@ class DatasetManager:
     transposed_outputs = list(map(list,list(zip(*outputs))))
     return transposed_outputs
 
-  def __get_dataset_from_input_locations(self, input_locations, defaults=None):
+  def __get_dataframe_from_input_locations(self, input_locations, defaults=None):
     dfs = []
     print('Inputs:')
     for location in input_locations:
@@ -319,115 +319,87 @@ class DatasetManager:
     error_strings = []
     for calc in calculations:
       required_values = calc.pop('required_values', None) # We do this first to remove required_values from calc
-      df[calc['name']] = self.__apply_function(df, **calc)
+      df[calc['column_name']] = self.__apply_function(df, **calc)
       if required_values is not None:
-        non_compliant = df.loc[[c not in required_values for c in df[calc['name']]]]
+        non_compliant = df.loc[[c not in required_values for c in df[calc['column_name']]]]
         if len(non_compliant) > 0:
           error_locations = ', '.join([str(n+input['start']+1) for n in non_compliant.index.values])
-          error_strings.append('Non-compliant values for [%s] found in the following rows: %s' % (calc['name'], error_locations))
+          error_strings.append('Non-compliant values for [%s] found in the following rows: %s' % (calc['column_name'], error_locations))
     if error_strings:
       raise ValueError('\n'.join(error_strings))
     return df
 
-  def __get_dataframe_from_inputs(self, input_settings):
+  def __get_dataframe_from_input_settings(self, input_settings):
     df = None
     input_locations = self.__get_input_locations(input_settings)
     if input_locations:
-      df = self.__get_dataset_from_input_locations(input_locations, input_settings['defaults'])
+      df = self.__get_dataframe_from_input_locations(input_locations, input_settings['defaults'])
       if len(df) > 0:
         df = self.__add_calculations(df, input_settings['calculations'])
       else: print('\nAll input files are empty.')
     else: print('No input files found.')
     return df
 
-  def __run_etls(self, settings):
-    df = self.__get_dataframe_from_inputs(settings['inputs'])
-    outputs = self.__get_outputs_from_dataframe(df, settings['outputs'])
+  def __run_etls(self, etl_settings):
+    df = self.__get_dataframe_from_input_settings(etl_settings['dataset_input_settings'])
+    outputs = self.__get_outputs_from_dataframe(df, etl_settings['outputs'])
     result = {
-      settings['name']: {
+      etl_settings['etl_name']: {
         'dataframe': df,
         'outputs': outputs,
       }
     }
     return result
 
-  """
-    previous_results = {
-      'writers':{
-        'dataframe': writers_df,
-        'output': [[composers_df, composers_path], [publishers_df, publishers_path]]
-      },
-      'songs':{
-        'dataframe': songs_df,
-        'output': [[tracks_df, tracks_path], [releases_df, releases_path]]
-      }
-    }
-  """
-  def __create_dataset_from_meta_calculations(self, previous_results, inputs):
+  def __create_dataset_from_meta_calculations(self, previous_results, dataset_input_settings):
     dataset = {}
-    for input_settings in inputs:
+    for input_settings in dataset_input_settings:
       previous_df = previous_results.get(input_settings['dataframe_name']).get('dataframe')
       df = self.__add_calculations(previous_df, input_settings['calculations'])
       dataset.update({input_settings['dataframe_name']: df})
     return dataset
 
-  def __get_dataframe_from_meta_dataset(self, meta_datasets, output):
-    return meta_datasets[output['dataframe_name']]
+  def __get_output_dataframe_from_dataset(self, dataset, output):
+    return dataset[output['dataframe_name']]
 
-  def __get_dataframe_dict_from_meta_inputs(self, previous_results, meta_input_settings):
+  def __get_dataframe_dict_from_previous_results(self, previous_results, etl_input_settings):
     dataframe_dict = {}
-    for dataset_settings in meta_input_settings:
-      dataset = self.__create_dataset_from_meta_calculations(previous_results, dataset_settings['inputs'])
-      df = self.__get_dataframe_from_meta_dataset(dataset, dataset_settings['output'])
+    for dataset_settings in etl_input_settings:
+      dataset = self.__create_dataset_from_meta_calculations(previous_results, dataset_settings['dataset_input_settings_list'])
+      df = self.__get_output_dataframe_from_dataset(dataset, dataset_settings['dataset_output'])
       result = { dataset_settings['name']: df}
       dataframe_dict.update(result)
     return dataframe_dict
-  """
-  
-    template_path = self.__download_drive_file(self.__sanitize_key(template_location['key']))
-    os.rename(template_path, path)
-    sheet_name = template_location.get('sheet',0)
-    if str(sheet_name).isnumeric():
-        xl = pd.ExcelFile(path)
-        sheet_name = xl.sheet_names[int(sheet_name)]
-    ef = pd.read_excel(path, sheet_name)
-    ef.columns = df.columns
-    ef = ef.append(df, ignore_index=True)
-    if nick_names:
-      ef.columns = nick_names
-    with pd.ExcelWriter(path,  engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
-      ef.to_excel(writer, sheet_name, index=False)
-  """
 
   def __get_sheet_output_from_meta_dataframe(self, input_df, path, sheet_output_settings):
     df = self.__apply_filters(input_df, sheet_output_settings.get('filters'))
     df, nick_names = self.__get_output_from_columns(df, sheet_output_settings['columns'])
     df, parent_sheet = self.__deduplicate_dataset(df, sheet_output_settings.get('dedup_column'), sheet_output_settings.get('parent_dataset'))
-    print('\tNew %s:\t%s' % (sheet_output_settings['name'], len(df)))
+    print('\tNew %s:\t%s' % (sheet_output_settings['sheet_name'], len(df)))
     if (len(df) == 0):
       return {}
     df.columns = nick_names
     self.__append_to_parent_sheet(df, parent_sheet)
-    sheet_name = sheet_output_settings.get('name',0)
+    sheet_name = sheet_output_settings.get('sheet_name',0)
     if str(sheet_name).isnumeric():
         xl = pd.ExcelFile(path)
         sheet_name = xl.sheet_names[int(sheet_name)]
     with pd.ExcelWriter(path,  engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
       df.to_excel(writer, sheet_name, index=False)
-    return {sheet_output_settings['name']: df}    
+    return {sheet_output_settings['sheet_name']: df}    
 
   def __get_file_output_from_meta_dataframe(self, dataframes, file_output_settings):
-    path = 'New_%s_%s.xlsx'%(file_output_settings['name'], self.start_time_unix)
-    template_path = self.__download_drive_file(self.__sanitize_key(file_output_settings['excel']['key']))
+    path = 'New_%s_%s.xlsx'%(file_output_settings['file_name'], self.start_time_unix)
+    template_path = self.__download_drive_file(self.__sanitize_key(file_output_settings['excel_template_location']['key']))
     os.rename(template_path, path)
     sheet_dataframes_dict = {}
-    for sheet_output_settings in file_output_settings['sheets']:
+    for sheet_output_settings in file_output_settings['sheet_output_settings_list']:
       input_df = dataframes.get(sheet_output_settings['dataframe_name'])
       df_dict = self.__get_sheet_output_from_meta_dataframe(input_df, path, sheet_output_settings)
       sheet_dataframes_dict.update(df_dict)
     if sheet_dataframes_dict:
-      self.__upload_file_to_folder(path, file_output_settings.get('folder'))
-    file_dict = {file_output_settings['name']: sheet_dataframes_dict}
+      self.__upload_file_to_folder(path, file_output_settings.get('export_folder'))
+    file_dict = {file_output_settings['file_name']: sheet_dataframes_dict}
     return [file_dict, path]
 
   def __get_outputs_dict_from_meta_dataframe_dict(self, dataframes, file_output_settings_list):
@@ -435,7 +407,7 @@ class DatasetManager:
     for file_output_settings in file_output_settings_list:
       df, path = self.__get_file_output_from_meta_dataframe(dataframes, file_output_settings)
       output = {
-        file_output_settings['name']: {
+        file_output_settings['file_name']: {
           'dataframe': df,
           'path': path,
         }
@@ -443,9 +415,24 @@ class DatasetManager:
       outputs_dict.update(output)
     return outputs_dict
 
+  def __get_dataset_from_input_settings(self, input_settings):
+    self.__get_dataframe_from_input_settings(input_settings)
+    df = None
+    input_locations = self.__get_input_locations(input_settings)
+    if input_locations:
+      df = self.__get_dataframe_from_input_locations(input_locations, input_settings['defaults'])
+      if len(df) > 0:
+        df = self.__add_calculations(df, input_settings['calculations'])
+      else: print('\nAll input files are empty.')
+    else: print('No input files found.')
+    dataset = {
+      'name': df
+    }
+    return df
+
   def __run_meta_etls(self, previous_results, etl_settings):
-    dataframe_dict = self.__get_dataframe_dict_from_meta_inputs(previous_results, etl_settings['inputs'])
-    outputs_dict = self.__get_outputs_dict_from_meta_dataframe_dict(dataframe_dict, etl_settings['outputs'])
+    dataframe_dict = self.__get_dataframe_dict_from_previous_results(previous_results, etl_settings['dataset_input_settings'])
+    outputs_dict = self.__get_outputs_dict_from_meta_dataframe_dict(dataframe_dict, etl_settings['dataset_output_settings'])
     return outputs_dict
 
   def run_ETLs(self, etl_settings_location):
