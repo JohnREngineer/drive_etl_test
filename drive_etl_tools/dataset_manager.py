@@ -477,6 +477,7 @@ class DatasetManager:
       results.update(r)
     self.verbose = True
     self.upload=True
+    self.pv('run_ETLs:results',results.keys())
     meta_outputs_dict = [self.__run_meta_etls(results, s) for s in etl_settings['meta_etls']]
     return meta_outputs_dict
     transposed_output = list(map(list,list(zip(*results)))) 
