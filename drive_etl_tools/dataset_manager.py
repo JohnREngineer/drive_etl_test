@@ -299,14 +299,17 @@ class DatasetManager:
       self.__upload_file_to_folder(path, sheet_output_settings.get('export_folder'))
     return [df, path]
 
-  def __get_output_dict_from_dataset(self, input_df, file_output_settings_list):
+  def __get_output_dict_from_dataset(self, input_dataset, file_output_settings_list):
     # self.pv('__get_outputs_from_dataframe:output settings %s'%file_output_settings_list)
-    if (input_df is None) or (len(input_df) == 0) :
-      return self.__get_empty_output(len(file_output_settings_list))
+    if not input_dataset:
+      return {}
+    # if (input_df is None) or (len(input_df) == 0) :
+    #   return self.__get_empty_output(len(file_output_settings_list))
     # outputs = []
     outputs_dict = {}
     for file_output_settings in file_output_settings_list:
-        outputs_dict.update(self.__get_file_output_from_meta_dataframe({file_output_settings['sheet_output_settings_list'][0]['dataframe_name']:input_df}, file_output_settings))
+        # dataset = {file_output_settings['sheet_output_settings_list'][0]['dataframe_name']:input_dataset}
+        outputs_dict.update(self.__get_file_output_from_meta_dataframe(input_dataset, file_output_settings))
         # for sheet_output_settings in file_output_settings['sheet_output_settings_list']:
         #   outputs.append(self.__get_sheet_output_from_dataframe(input_df, sheet_output_settings))
     # transposed_outputs = list(map(list,list(zip(*outputs))))
@@ -357,7 +360,7 @@ class DatasetManager:
   def __run_etls(self, etl_settings):
     # self.pv(':getting %s'%etl_settings['dataset_input_settings'])
     dataset = self.__get_dataset_from_input_settings(etl_settings['dataset_input_settings'])
-    # self.pv(':got %s '%df.columns)
+    self.pv('__run_etls:dataset',dataset)
     output_dict = self.__get_output_dict_from_dataset(dataset, etl_settings['dataset_output_settings'])
     self.pv('__run_etls:output_dict',output_dict)
     result = {
