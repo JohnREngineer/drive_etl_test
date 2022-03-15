@@ -305,16 +305,17 @@ class DatasetManager:
       return {}
     # if (input_df is None) or (len(input_df) == 0) :
     #   return self.__get_empty_output(len(file_output_settings_list))
-    # outputs = []
-    outputs_dict = {}
+    outputs = []
+    # outputs_dict = {}
     for file_output_settings in file_output_settings_list:
         # dataset = {file_output_settings['sheet_output_settings_list'][0]['dataframe_name']:input_dataset}
-        outputs_dict.update(self.__get_file_output_from_meta_dataframe(input_dataset, file_output_settings))
+        file_dict, df, path = self.__get_file_output_from_meta_dataframe(input_dataset, file_output_settings)
+        outputs.append([df,path,file_dict])
         # for sheet_output_settings in file_output_settings['sheet_output_settings_list']:
         #   outputs.append(self.__get_sheet_output_from_dataframe(input_df, sheet_output_settings))
-    # transposed_outputs = list(map(list,list(zip(*outputs))))
-    # return transposed_outputs
-    return outputs_dict
+    transposed_outputs = list(map(list,list(zip(*outputs))))
+    return transposed_outputs
+    # return outputs_dict
 
 
   def __get_dataframe_from_input_locations(self, input_locations, defaults=None):
@@ -361,18 +362,18 @@ class DatasetManager:
     # self.pv(':getting %s'%etl_settings['dataset_input_settings'])
     dataset = self.__get_dataset_from_input_settings(etl_settings['dataset_input_settings'])
     self.pv('__run_etls:dataset',dataset)
-    # output_dict = self.__get_output_dict_from_dataset(dataset, etl_settings['dataset_output_settings'])
-    output_dict = self.__get_outputs_dict_from_meta_dataframe_dict(dataset, etl_settings['dataset_output_settings'])
-    self.pv('__run_etls:output_dict',output_dict)
-    # result = {
-    #   etl_settings['etl_name']: {
-    #     'dataframe': dataset,
-    #     'output_dict': output_dict,
-    #   }
-    # }
-    # self.pv(':result %s'%result)
+    outputs_dict, dfs, paths = self.__get_output_dict_from_dataset(dataset, etl_settings['dataset_output_settings'])
+    # output_dict = self.__get_outputs_dict_from_meta_dataframe_dict(dataset, etl_settings['dataset_output_settings'])
+    # self.pv('__run_etls:output_dict',output_dict)
+    result = {
+      etl_settings['etl_name']: {
+        'dataframe': dfs[0],
+        'path': paths[0]
+      }
+    }
+    self.pv(':result %s'%result)
     # return result
-    return output_dict
+    return result
 
   def __create_dataset_from_meta_calculations(self, previous_results, dataset_input_settings):
     dataset = {}
@@ -409,31 +410,34 @@ class DatasetManager:
         sheet_name = xl.sheet_names[int(sheet_name)]
     with pd.ExcelWriter(path,  engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
       df.to_excel(writer, sheet_name, index=False)
-    return {sheet_output_settings['sheet_name']: df}    
+    return {sheet_output_settings['sheet_name']: df}, df    
 
   def __get_file_output_from_meta_dataframe(self, dataframes, file_output_settings):
     path = 'New_%s_%s.xlsx'%(file_output_settings['file_name'], self.start_time_unix)
     template_path = self.__download_drive_file(self.__sanitize_key(file_output_settings['excel_template_location']['key']))
     os.rename(template_path, path)
     sheet_dataframes_dict = {}
+    dfs = []
     for sheet_output_settings in file_output_settings['sheet_output_settings_list']:
       self.pv('__get_file_output_from_meta_dataframe:sheet_output_settings',sheet_output_settings)
       input_df = dataframes.get(sheet_output_settings['dataframe_name'])
       self.pv('__get_file_output_from_meta_dataframe:input_df',input_df)
-      df_dict = self.__get_sheet_output_from_meta_dataframe(input_df, path, sheet_output_settings)
+      df_dict, df = self.__get_sheet_output_from_meta_dataframe(input_df, path, sheet_output_settings)
       sheet_dataframes_dict.update(df_dict)
+      dfs.append(df)
     if sheet_dataframes_dict:
       self.__upload_file_to_folder(path, file_output_settings.get('export_folder'))
     file_dict = {file_output_settings['file_name']: sheet_dataframes_dict}
-    return [file_dict, path]
+    return [file_dict, dfs, path]
 
   def __get_outputs_dict_from_meta_dataframe_dict(self, dataframes, file_output_settings_list):
     outputs_dict = {}
     for file_output_settings in file_output_settings_list:
-      df, path = self.__get_file_output_from_meta_dataframe(dataframes, file_output_settings)
+      file_dict, dfs, path = self.__get_file_output_from_meta_dataframe(dataframes, file_output_settings)
       output = {
         file_output_settings['file_name']: {
-          'dataframe': df,
+          'file_dict': file_dict,
+          'dataframes': dfs,
           'path': path,
         }
       }
@@ -471,11 +475,11 @@ class DatasetManager:
     self.upload = False
     etl_settings = self.__get_etl_settings_from_location(etl_settings_location)
     self.__update_functions(etl_settings['functions'])
+    self.verbose = True
     results_list = [self.__run_etls(s) for s in etl_settings['etls']]
     results = {}
     for r in results_list:
       results.update(r)
-    self.verbose = True
     self.upload=True
     self.pv('run_ETLs:results',results)
     meta_outputs_dict = [self.__run_meta_etls(results, s) for s in etl_settings['meta_etls']]
