@@ -305,7 +305,7 @@ class DatasetManager:
     outputs = []
     for output_settings in output_settings_list:
       for sheet_output_settings in output_settings['sheet_output_settings_list']:
-        outputs.append(self.__get_sheet_output_from_dataframe(input_df, output_settings['sheet_output_settings_list']))
+        outputs.append(self.__get_sheet_output_from_dataframe(input_df, sheet_output_settings))
     transposed_outputs = list(map(list,list(zip(*outputs))))
     return transposed_outputs
 
