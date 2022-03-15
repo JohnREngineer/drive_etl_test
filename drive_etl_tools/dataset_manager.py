@@ -349,7 +349,7 @@ class DatasetManager:
       df = self.__get_dataframe_from_input_locations(input_locations, input_settings['defaults'])
       if len(df) > 0:
         df = self.__add_calculations(df, input_settings['calculations'])
-        datasets.update({input_settings['dataset_output']['dataset_name']})
+        datasets.update({input_settings['dataset_output']['dataframe_name']})
       else: print('\nAll input files are empty.')
     else: print('No input files found.')
     return datasets
