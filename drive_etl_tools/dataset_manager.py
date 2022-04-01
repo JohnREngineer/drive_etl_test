@@ -3,7 +3,7 @@ from re import I
 from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
 import gspread
-from oauth2client.client import GoogleCredentials
+from oauth2client.service_account import ServiceAccountCredentials
 import pandas as pd
 import time
 import uuid
@@ -13,19 +13,21 @@ import importlib
 import sys
 
 class DatasetManager:
-  def __init__(self):
-    self.__update_credentials()
+  def __init__(self, secret_path):
+    self.__update_credentials(secret_path)
     self.start_time_unix = ''
     self.etl_functions = {}
     self.folder_string = 'https://drive.google.com/drive/folders/%s'
     self.file_string = 'https://drive.google.com/file/d/%s/edit'
     self.sheet_string = 'https://docs.google.com/spreadsheets/d/%s/edit'
 
-  def __update_credentials(self):
-    self.google_credentials = GoogleCredentials.get_application_default()
-    self.gss_client = gspread.authorize(self.google_credentials)
+  def __update_credentials(self, secret_path):
+    self.gss_client = gspread.service_account(filename=secret_path)
+    scope = ["https://www.googleapis.com/auth/drive",
+      "https://www.googleapis.com/auth/spreadsheets"]
     gauth = GoogleAuth()
-    gauth.credentials = self.google_credentials
+    gauth.auth_method = 'service'
+    gauth.credentials = ServiceAccountCredentials.from_json_keyfile_name(secret_path, scope)
     self.drive = GoogleDrive(gauth)
 
   def __download_drive_file(self, key):
