@@ -18,5 +18,5 @@ setuptools.setup(
     },
     license='https://www.fsf.org/licensing/licenses/agpl-3.0.html',
     packages=['drive_etl_tools'],
-    install_requires=['pydrive2','gspread','pandas'],
+    install_requires=['pydrive2','gspread>=4.0.0','pandas'],
 )
