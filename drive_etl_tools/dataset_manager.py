@@ -318,8 +318,8 @@ class DatasetManager:
       if required_values is not None:
         non_compliant = df.loc[[c not in required_values for c in df[calc['name']]]]
         if len(non_compliant) > 0:
-          error_values = ', '.join([f"\"{str(v)}\"" for v in non_compliant[calc['name']].values])
-          error_strings.append('Non-compliant values for [%s] found: %s' % (calc['name'], error_values))
+          error_pairs = ', '.join([f"(\"{v}\", {i})" for v, i in zip(non_compliant[calc['name']].values, non_compliant.index.values)])
+          error_strings.append('Non-compliant values for [%s] found: %s' % (calc['name'], error_pairs))
     if error_strings:
       raise ValueError('\n'.join(error_strings))
     return df
